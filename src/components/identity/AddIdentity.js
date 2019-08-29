@@ -7,11 +7,11 @@ import { Text } from 'react-native'
 import merge from 'lodash/merge'
 import pickBy from 'lodash/pickBy'
 import BrandIcon from '../common/view/BrandIcon'
-import IdentityDataTable from '../identity/IdentityDataTable'
 import GDStore from '../../lib/undux/GDStore'
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { withStyles } from '../../lib/styles'
 import { SaveButton, Section, UserAvatar, Wrapper } from '../common'
+import IdentityDataTable from './IdentityDataTable'
 
 const TITLE = 'Add Identity'
 

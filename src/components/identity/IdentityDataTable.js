@@ -14,17 +14,17 @@ const IdentityDataTable = ({ identity, errors: errorsProp, editable, theme, styl
   return (
     <Section.Row alignItems="center" grow={1}>
       <KeyboardAwareScrollView resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
-        {Object.keys(identity).map(x => (
-          <Section.Row key={x} style={!editable && styles.borderedBottomStyle}>
-            <BrandIcon name={x} />
-            <Text>{identity[x].username}</Text>
+        {Object.keys(identity).map(id => (
+          <Section.Row key={id} style={!editable && styles.borderedBottomStyle}>
+            <BrandIcon name={id} />
+            <Text>{identity[id].username}</Text>
             {editable && (
               <Icon
                 color={theme.colors.primary}
-                name="twitter-square"
+                name="close"
                 size={28}
                 style={styles.phoneIcon}
-                onPress={() => delete identity[x]}
+                onPress={() => delete identity[id]}
               />
             )}
             {errors.mobile && <Text>{errors.mobile}</Text>}
