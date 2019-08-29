@@ -4,6 +4,8 @@ import GDStore from '../../lib/undux/GDStore'
 import { createStackNavigator } from '../appNavigation/stackNavigation'
 import { Section, UserAvatar, Wrapper } from '../common'
 import { withStyles } from '../../lib/styles'
+import userStorage from '../../lib/gundb/UserStorage'
+import IdentityDataTable from '../identity/IdentityDataTable'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -13,10 +15,23 @@ import CircleButtonWrapper from './CircleButtonWrapper'
 
 const TITLE = 'Profile'
 
+const ExampleIdentity = {
+  github: {
+    username: 'github username',
+  },
+  twitter: {
+    username: 'twitter name',
+  },
+  facebook: {
+    username: 'facebook name',
+  },
+}
+
 const ProfileWrapper = props => {
   const store = GDStore.useStore()
   const profile = store.get('profile')
   const { screenProps, styles } = props
+  const editIdentities = false
 
   const handleAvatarPress = event => {
     event.preventDefault()
@@ -36,7 +51,8 @@ const ProfileWrapper = props => {
             style={[styles.iconRight]}
           />
         </Section.Row>
-        <ProfileDataTable profile={profile} />
+        <ProfileDataTable profile={profile} identity={ExampleIdentity} />
+        <IdentityDataTable identity={ExampleIdentity} editable={editIdentities} />
       </Section>
     </Wrapper>
   )
