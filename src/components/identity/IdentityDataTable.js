@@ -2,62 +2,12 @@ import React from 'react'
 
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Text } from 'react-native'
-
-//import { Alert, Modal, Text, TouchableHighlight, View } from 'react-native'
 import Icon from '../common/view/Icon'
 import BrandIcon from '../common/view/BrandIcon'
 
-//import InputRounded from '../common/form/InputRounded'
 import Section from '../common/layout/Section'
 
 import { withStyles } from '../../lib/styles'
-
-// class ModalExample extends Component {
-//   state = {
-//     modalVisible: false,
-//   }
-
-//   setModalVisible(visible) {
-//     this.setState({ modalVisible: visible })
-//   }
-
-//   render() {
-//     return (
-//       <View style={{ marginTop: 22 }}>
-//         <Modal
-//           animationType="slide"
-//           transparent={false}
-//           visible={this.state.modalVisible}
-//           onRequestClose={() => {
-//             Alert.alert('Modal has been closed.')
-//           }}
-//         >
-//           <View style={{ marginTop: 22 }}>
-//             <View>
-//               <Text>Hello World!</Text>
-
-//               <TouchableHighlight
-//                 onPress={() => {
-//                   this.setModalVisible(!this.state.modalVisible)
-//                 }}
-//               >
-//                 <Text>Hide Modal</Text>
-//               </TouchableHighlight>
-//             </View>
-//           </View>
-//         </Modal>
-
-//         <TouchableHighlight
-//           onPress={() => {
-//             this.setModalVisible(true)
-//           }}
-//         >
-//           <Text>Show Modal</Text>
-//         </TouchableHighlight>
-//       </View>
-//     )
-//   }
-// }
 
 const IdentityDataTable = ({ identity, errors: errorsProp, editable, theme, styles }) => {
   const errors = errorsProp || {}
