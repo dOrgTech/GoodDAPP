@@ -57,6 +57,10 @@
   "dependencies": {
     "@babel/preset-flow": "^7.0.0",
     "@gooddollar/goodcontracts": "0.0.19",
+    "@fortawesome/fontawesome-svg-core": "^1.2.22",
+    "@fortawesome/free-brands-svg-icons": "^5.10.2",
+    "@fortawesome/react-native-fontawesome": "^0.1.0",
+    "@gooddollar/goodcontracts": "0.0.18",
     "@gooddollar/gun-appendonly": "^1.0.1",
     "@react-navigation/core": "^3.1.1",
     "@react-navigation/web": "^1.0.0-alpha.7",
@@ -92,6 +96,7 @@
     "react-native-qrcode-scanner": "^1.1.2",
     "react-native-recaptcha-v3": "0.0.16",
     "react-native-side-menu-gooddapp": "^2.0.2",
+    "react-native-svg": "^9.7.1",
     "react-native-vector-icons": "^6.6.0",
     "react-native-web": "^0.11.4",
     "react-native-web-webview": "^0.2.8",
