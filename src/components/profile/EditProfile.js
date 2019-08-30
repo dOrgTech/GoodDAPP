@@ -77,7 +77,7 @@ const EditProfile = ({ screenProps, theme, styles }) => {
 
           return valid
         } catch (e) {
-          log.error('validate profile failed', e, e.message)
+          log.error('validate profile failed', e.message, e)
           showErrorDialog('Unexpected error while validating profile', e)
           return false
         }
@@ -121,9 +121,9 @@ const EditProfile = ({ screenProps, theme, styles }) => {
     })
     return userStorage
       .setProfile(toupdate, true)
-      .catch(err => {
-        log.error('Error saving profile', { err, toupdate })
-        showErrorDialog('Unexpected error while saving profile', err)
+      .catch(e => {
+        log.error('Error saving profile', { toupdate }, e.message, e)
+        showErrorDialog('Unexpected error while saving profile', e)
         return false
       })
       .finally(_ => setSaving(false))
