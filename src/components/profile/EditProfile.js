@@ -6,6 +6,8 @@ import isEqual from 'lodash/isEqual'
 
 import merge from 'lodash/merge'
 import pickBy from 'lodash/pickBy'
+
+//import IdentityDataTable from '../identity/IdentityDataTable'
 import userStorage from '../../lib/gundb/UserStorage'
 import logger from '../../lib/logger/pino-logger'
 import GDStore from '../../lib/undux/GDStore'
@@ -166,6 +168,14 @@ EditProfile.navigationOptions = {
   title: TITLE,
 }
 
-const getStylesFromProps = ({ theme }) => ({})
+const getStylesFromProps = ({ theme }) => ({
+  section: {
+    flexGrow: 1,
+    padding: theme.sizes.defaultDouble,
+  },
+  iconRight: {
+    transform: [{ rotateY: '180deg' }],
+  },
+})
 
 export default withStyles(getStylesFromProps)(EditProfile)
