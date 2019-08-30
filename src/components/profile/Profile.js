@@ -7,6 +7,7 @@ import { Section, UserAvatar, Wrapper } from '../common'
 import { withStyles } from '../../lib/styles'
 import userStorage from '../../lib/gundb/UserStorage'
 import IdentityDataTable from '../identity/IdentityDataTable'
+import AddIdentityMenu from '../identity/AddIdentityMenu'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -64,6 +65,12 @@ const ProfileWrapper = props => {
         </Section.Row>
         <ProfileDataTable profile={profile} identity={ExampleIdentity} />
         <IdentityDataTable identity={ExampleIdentity} editable={editIdentities} />
+        <CircleButtonWrapper
+          iconName={'invite'}
+          iconSize={25}
+          onPress={() => screenProps.push('AddIdentityMenu')}
+          style={[styles.iconRight]}
+        />
       </Section>
     </Wrapper>
   )
@@ -85,4 +92,4 @@ const getStylesFromProps = ({ theme }) => ({
 
 const Profile = withStyles(getStylesFromProps)(ProfileWrapper)
 
-export default createStackNavigator({ Profile, EditProfile, ProfilePrivacy, ViewAvatar, EditAvatar })
+export default createStackNavigator({ Profile, EditProfile, ProfilePrivacy, ViewAvatar, EditAvatar, AddIdentityMenu })

@@ -1,10 +1,10 @@
 // @flow
 import React from 'react'
 
-import { FlatList, Text, TouchableOpacity } from 'react-native'
-import BrandIcon from '../common/view/BrandIcon'
+import { FlatList, TouchableOpacity } from 'react-native'
 import { withStyles } from '../../lib/styles'
 import { Section, Wrapper } from '../common'
+import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 
 const TITLE = 'Add Identity'
@@ -19,10 +19,17 @@ const arrayDiff = (a, b) => {
   return a.filter(x => !b.includes(x))
 }
 
-const IdentityView = ({ id, onPress }) => (
-  <TouchableOpacity onPress={onPress}>
-    <Text>Verify {id} account</Text>
-    <BrandIcon name={id} />
+const IdentityView = ({ id, onPress, style, theme }) => (
+  <TouchableOpacity style={style} onPress={onPress}>
+    <Section.Row>
+      <InputRounded
+        disabled={true}
+        brand={id}
+        iconColor={theme.colors.primary}
+        iconSize={28}
+        value={'Verify ' + id + ' identity'}
+      />
+    </Section.Row>
   </TouchableOpacity>
 )
 
@@ -31,20 +38,21 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const storedIdentity = store.get('identity')
   const onPressItem = id => id
 
-  const renderItem = ({ item }) => <IdentityView id={item} onPressItem={() => onPressItem(item)} />
+  const renderItem = ({ item }) => (
+    <IdentityView theme={theme} id={item} style={styles.borderedBottomStyle} onPressItem={() => onPressItem(item)} />
+  )
 
   const keyExtractor = (item, index) => item
 
   return (
     <Wrapper>
-      <Section grow>
+      <Section grow style={styles.Section}>
         <Section.Stack>
           <FlatList
             data={arrayDiff(supportedIdentities, Object.keys(storedIdentity))}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
-          <Text>{arrayDiff(supportedIdentities, Object.keys(storedIdentity))}</Text>
         </Section.Stack>
       </Section>
     </Wrapper>
@@ -55,6 +63,28 @@ AddIdentityMenu.navigationOptions = {
   title: TITLE,
 }
 
-const getStylesFromProps = ({ theme }) => ({})
+const getStylesFromProps = ({ theme }) => {
+  return {
+    borderedBottomStyle: {
+      borderBottomColor: theme.colors.lightGray,
+      borderBottomWidth: 1,
+    },
+    suffixIcon: {
+      alignItems: 'center',
+      display: 'flex',
+      height: 38,
+      justifyContent: 'center',
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      width: 32,
+      zIndex: 1,
+    },
+    errorMargin: {
+      marginTop: theme.sizes.default,
+      marginBottom: theme.sizes.default,
+    },
+  }
+}
 
 export default withStyles(getStylesFromProps)(AddIdentityMenu)
