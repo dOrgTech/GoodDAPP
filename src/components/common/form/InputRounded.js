@@ -3,6 +3,7 @@ import { TextInput, View } from 'react-native'
 import normalize from '../../../lib/utils/normalizeText'
 import { withStyles } from '../../../lib/styles'
 import Icon from '../view/Icon'
+import BrandIcon from '../view/BrandIcon'
 import ErrorText from './ErrorText'
 
 /**
@@ -13,7 +14,7 @@ import ErrorText from './ErrorText'
  * @param {React.Node} props.children
  * @returns {React.Node}
  */
-const InputRounded = ({ styles, theme, icon, iconSize, iconColor, error, onChange, ...inputProps }) => {
+const InputRounded = ({ styles, theme, brand, icon, iconSize, iconColor, error, onChange, ...inputProps }) => {
   const handleChange = event => {
     onChange(event.target.value)
   }
@@ -30,11 +31,20 @@ const InputRounded = ({ styles, theme, icon, iconSize, iconColor, error, onChang
           {...inputProps}
         />
         <View style={styles.suffixIcon}>
-          <Icon
-            color={error ? theme.colors.red : iconColor || theme.colors.gray50Percent}
-            name={icon}
-            size={iconSize}
-          />
+          {icon && !brand && (
+            <Icon
+              color={error ? theme.colors.red : iconColor || theme.colors.gray50Percent}
+              name={icon}
+              size={iconSize}
+            />
+          )}
+          {!icon && brand && (
+            <BrandIcon
+              color={error ? theme.colors.red : iconColor || theme.colors.gray50Percent}
+              name={brand}
+              size={iconSize}
+            />
+          )}
         </View>
       </View>
       {!inputProps.disabled && <ErrorText error={error} style={styles.errorMargin} />}
