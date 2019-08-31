@@ -1,6 +1,5 @@
 // @flow
 import React from 'react'
-
 import { FlatList, TouchableOpacity } from 'react-native'
 import { withStyles } from '../../lib/styles'
 import { Section, Wrapper } from '../common'
@@ -20,8 +19,8 @@ const arrayDiff = (a, b) => {
 }
 
 const IdentityView = ({ id, onPress, style, theme }) => (
-  <TouchableOpacity style={style} onPress={onPress}>
-    <Section.Row>
+  <TouchableOpacity onPress={onPress}>
+    <Section.Row style={style}>
       <InputRounded
         disabled={true}
         brand={id}
@@ -36,11 +35,21 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const store = GDStore.useStore()
   const storedIdentity = store.get('identity')
-  const onPressItem = id => id
 
-  const renderItem = ({ item }) => (
-    <IdentityView theme={theme} id={item} style={styles.borderedBottomStyle} onPressItem={() => onPressItem(item)} />
-  )
+  const onAddIdentityPress = name => {
+    screenProps.push('AddIdentity', { name, theme, styles })
+  }
+
+  const renderItem = ({ item }) => {
+    return (
+      <IdentityView
+        theme={theme}
+        id={item}
+        style={styles.borderedBottomStyle}
+        onPress={() => onAddIdentityPress(item)}
+      />
+    )
+  }
 
   const keyExtractor = (item, index) => item
 

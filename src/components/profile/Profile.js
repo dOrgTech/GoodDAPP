@@ -8,6 +8,7 @@ import { withStyles } from '../../lib/styles'
 import userStorage from '../../lib/gundb/UserStorage'
 import IdentityDataTable from '../identity/IdentityDataTable'
 import AddIdentityMenu from '../identity/AddIdentityMenu'
+import AddIdentity from '../identity/AddIdentity'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -32,6 +33,7 @@ const ExampleIdentity = {
 const ProfileWrapper = props => {
   const store = GDStore.useStore()
   const profile = store.get('profile')
+  const identity = store.get('identity')
   const { screenProps, styles } = props
   const editIdentities = false
 
@@ -64,7 +66,7 @@ const ProfileWrapper = props => {
           />
         </Section.Row>
         <ProfileDataTable profile={profile} identity={ExampleIdentity} />
-        <IdentityDataTable identity={ExampleIdentity} editable={editIdentities} />
+        <IdentityDataTable identity={identity} editable={editIdentities} />
         <CircleButtonWrapper
           iconName={'invite'}
           iconSize={25}
@@ -92,4 +94,12 @@ const getStylesFromProps = ({ theme }) => ({
 
 const Profile = withStyles(getStylesFromProps)(ProfileWrapper)
 
-export default createStackNavigator({ Profile, EditProfile, ProfilePrivacy, ViewAvatar, EditAvatar, AddIdentityMenu })
+export default createStackNavigator({
+  Profile,
+  EditProfile,
+  ProfilePrivacy,
+  ViewAvatar,
+  EditAvatar,
+  AddIdentityMenu,
+  AddIdentity,
+})
