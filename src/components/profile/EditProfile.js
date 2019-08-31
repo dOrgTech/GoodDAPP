@@ -14,6 +14,7 @@ import GDStore from '../../lib/undux/GDStore'
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { withStyles } from '../../lib/styles'
 import { SaveButton, Section, UserAvatar, Wrapper } from '../common'
+import IdentityDataTable from '../identity/IdentityDataTable'
 import CameraButton from './CameraButton'
 import ProfileDataTable from './ProfileDataTable'
 
@@ -34,6 +35,8 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   const [isPristine, setIsPristine] = useState(true)
   const [errors, setErrors] = useState({})
   const [showErrorDialog] = useErrorDialog()
+  const storedIdentity = store.get('identity')
+  const [identity, setIdentity] = useState(storedIdentity)
 
   //initialize profile value for first time from storedprofile
   useEffect(() => {
@@ -95,6 +98,7 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   }
 
   const handleSaveButton = async () => {
+    store.set('identity')(identity)
     setSaving(true)
 
     // with flush triggers immediate call for the validation
@@ -133,6 +137,12 @@ const EditProfile = ({ screenProps, theme, styles }) => {
     screenProps.pop()
   }
 
+  const handleIdentityChange = name => {
+    const obj = { ...identity }
+    delete obj[name]
+    setIdentity(obj)
+  }
+
   const handleAvatarPress = event => {
     event.preventDefault()
     screenProps.push(`ViewAvatar`)
@@ -159,6 +169,7 @@ const EditProfile = ({ screenProps, theme, styles }) => {
           <SaveButton disabled={isPristine || !isValid} onPress={handleSaveButton} onPressDone={onProfileSaved} />
         </Section.Row>
         <ProfileDataTable onChange={handleProfileChange} editable={true} errors={errors} profile={profile} />
+        <IdentityDataTable onChange={handleIdentityChange} identity={identity} editable={true} />
       </Section>
     </Wrapper>
   )

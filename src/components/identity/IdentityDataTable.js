@@ -9,27 +9,30 @@ import Section from '../common/layout/Section'
 
 import { withStyles } from '../../lib/styles'
 
-const IdentityDataTable = ({ identity, errors: errorsProp, editable, theme, styles }) => {
+const IdentityDataTable = ({ identity, errors: errorsProp, onChange, editable, theme, styles }) => {
   const errors = errorsProp || {}
   return (
     <Section.Row alignItems="center" grow={1}>
       <KeyboardAwareScrollView resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
-        {Object.keys(identity).map(id => (
-          <Section.Row key={id} style={!editable && styles.borderedBottomStyle}>
-            <BrandIcon name={id} />
-            <Text>{identity[id].username}</Text>
-            {editable && (
-              <Icon
-                color={theme.colors.primary}
-                name="close"
-                size={28}
-                style={styles.phoneIcon}
-                onPress={() => delete identity[id]}
-              />
-            )}
-            {errors.mobile && <Text>{errors.mobile}</Text>}
-          </Section.Row>
-        ))}
+        {Object.keys(identity).map(
+          id =>
+            identity[id] && (
+              <Section.Row key={id} style={!editable && styles.borderedBottomStyle}>
+                <BrandIcon name={id} />
+                <Text>{identity[id].username}</Text>
+                {editable && (
+                  <Icon
+                    color={theme.colors.primary}
+                    name="close"
+                    size={28}
+                    style={styles.phoneIcon}
+                    onPress={() => onChange(id)}
+                  />
+                )}
+                {errors.mobile && <Text>{errors.mobile}</Text>}
+              </Section.Row>
+            )
+        )}
       </KeyboardAwareScrollView>
     </Section.Row>
   )
