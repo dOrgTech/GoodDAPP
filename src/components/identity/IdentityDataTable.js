@@ -26,7 +26,7 @@ const IdentityDataTable = ({ identity, errors: errorsProp, onChange, editable, t
                     name="close"
                     size={28}
                     style={styles.phoneIcon}
-                    onPress={() => onChange(id)}
+                    onPress={onChange ? () => onChange(id) : null}
                   />
                 )}
                 {errors.mobile && <Text>{errors.mobile}</Text>}
