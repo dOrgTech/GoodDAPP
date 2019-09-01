@@ -139,7 +139,6 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   const handleIdentityChange = name => {
     const obj = { ...identity }
     delete obj[name]
-    console.log('identity changed')
     setIdentity(obj)
     setIsPristine(false)
     setIsValid(true)
@@ -162,8 +161,6 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   }, [profile])
 
   useEffect(() => {
-    console.log('identity triggered')
-
     //need to pass parameters into memoized debounced method otherwise setX hooks wont work
     validate(profile, storedProfile, identity, storedIdentity, setIsPristine, setErrors, setIsValid)
   }, [identity])
