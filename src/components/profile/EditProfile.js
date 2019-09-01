@@ -77,7 +77,6 @@ const EditProfile = ({ screenProps, theme, styles }) => {
           setErrors(merge(errors, errorsIndex))
           setIsValid(valid)
           setIsPristine(pristine)
-
           return valid
         } catch (e) {
           log.error('validate profile failed', e.message, e)
@@ -140,7 +139,10 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   const handleIdentityChange = name => {
     const obj = { ...identity }
     delete obj[name]
+    console.log('identity changed')
     setIdentity(obj)
+    setIsPristine(false)
+    setIsValid(true)
   }
 
   const handleAvatarPress = event => {
@@ -156,8 +158,15 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   // Validate after saving profile state in order to show errors
   useEffect(() => {
     //need to pass parameters into memoized debounced method otherwise setX hooks wont work
-    validate(profile, storedProfile, setIsPristine, setErrors, setIsValid)
+    validate(profile, storedProfile, identity, storedIdentity, setIsPristine, setErrors, setIsValid)
   }, [profile])
+
+  useEffect(() => {
+    console.log('identity triggered')
+
+    //need to pass parameters into memoized debounced method otherwise setX hooks wont work
+    validate(profile, storedProfile, identity, storedIdentity, setIsPristine, setErrors, setIsValid)
+  }, [identity])
 
   return (
     <Wrapper>
