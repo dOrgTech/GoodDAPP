@@ -12,6 +12,14 @@ const TITLE = 'Add Identity'
 //   return pickBy(obj, (v, k) => v !== undefined && v !== '')
 // }
 
+/*
+In Profile view, identities should have same style and be spaced appropriately with respect to the other account information.
+Maybe a separator that notes the latter are identities, maybe not.
+In EditProfile, identities should have the same style and be spaced appropriately as the above information, or not exist there at all.
+In AddIdentity, double gray lines in add identity should be removed. Should maybe be more filled out, maybe add a header view.
+
+*/
+
 const supportedIdentities = ['github', 'twitter', 'facebook']
 
 const arrayDiff = (a, b) => {
