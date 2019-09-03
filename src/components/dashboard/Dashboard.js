@@ -1,6 +1,5 @@
 // @flow
 import React, { useEffect, useState } from 'react'
-
 import type { Store } from 'undux'
 import normalize from '../../lib/utils/normalizeText'
 import GDStore from '../../lib/undux/GDStore'
