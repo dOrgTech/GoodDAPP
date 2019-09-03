@@ -58,6 +58,8 @@ const initialState: State = {
   isLoggedInCitizen: false,
   isLoggedIn: false,
   profile: {},
+  identity: {},
+  identityPhotos: {},
   privateProfile: {},
   destinationPath: '',
   feeds: [],

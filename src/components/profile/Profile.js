@@ -7,7 +7,11 @@ import { withStyles } from '../../lib/styles'
 import userStorage from '../../lib/gundb/UserStorage'
 import IdentityDataTable from '../identity/IdentityDataTable'
 import AddIdentityMenu from '../identity/AddIdentityMenu'
+import UploadPhoto from '../identity/UploadPhoto'
 import AddIdentity from '../identity/AddIdentity'
+import AddHumanVerification from '../identity/AddHumanVerification'
+import AddPhotoId from '../identity/AddPhotoId'
+import FaceRecognition from '../dashboard/FaceRecognition/FaceRecognition'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -91,4 +95,8 @@ export default createStackNavigator({
   EditAvatar,
   AddIdentityMenu,
   AddIdentity,
+  FaceRecognition,
+  AddHumanVerification,
+  UploadPhoto,
+  AddPhotoId,
 })

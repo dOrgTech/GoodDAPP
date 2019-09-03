@@ -12,15 +12,7 @@ const TITLE = 'Add Identity'
 //   return pickBy(obj, (v, k) => v !== undefined && v !== '')
 // }
 
-/*
-In Profile view, identities should have same style and be spaced appropriately with respect to the other account information.
-Maybe a separator that notes the latter are identities, maybe not.
-In EditProfile, identities should have the same style and be spaced appropriately as the above information, or not exist there at all.
-In AddIdentity, double gray lines in add identity should be removed. Should maybe be more filled out, maybe add a header view.
-
-*/
-
-const supportedIdentities = ['github', 'twitter', 'facebook']
+const supportedIdentities = ['GitHub', 'Twitter', 'Facebook', 'LinkedIn']
 
 const arrayDiff = (a, b) => {
   return a.filter(x => !b.includes(x))
@@ -43,6 +35,7 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const store = GDStore.useStore()
   const storedIdentity = store.get('identity')
+  const identityPhotos = store.get('identityPhotos')
 
   const onAddIdentityPress = name => {
     screenProps.push('AddIdentity', { name, theme, styles })
@@ -64,6 +57,9 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const handleVerifyPhoto = () => {
     screenProps.push('AddHumanVerification')
   }
+  const handleVerifyPhotoId = () => {
+    screenProps.push('AddPhotoId')
+  }
 
   return (
     <Wrapper>
@@ -74,15 +70,28 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
-          <TouchableOpacity onPress={handleVerifyPhoto}>
-            <InputRounded
-              disabled={true}
-              iconName={'send'}
-              iconColor={theme.colors.primary}
-              iconSize={28}
-              value={'Take photo'}
-            />
-          </TouchableOpacity>
+          {!identityPhotos.humanPhoto && (
+            <TouchableOpacity onPress={handleVerifyPhoto}>
+              <InputRounded
+                disabled={true}
+                icon={'send'}
+                iconColor={theme.colors.primary}
+                iconSize={28}
+                value={"Verify you're a human through a personal photo"}
+              />
+            </TouchableOpacity>
+          )}
+          {!identityPhotos.photoId && (
+            <TouchableOpacity onPress={handleVerifyPhotoId}>
+              <InputRounded
+                disabled={true}
+                icon={'send'}
+                iconColor={theme.colors.primary}
+                iconSize={28}
+                value={'Verify your photo ID'}
+              />
+            </TouchableOpacity>
+          )}
         </Section.Stack>
       </Section>
     </Wrapper>
