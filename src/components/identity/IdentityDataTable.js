@@ -1,3 +1,4 @@
+// @flow
 import React from 'react'
 
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -20,15 +21,18 @@ const IdentityDataTable = ({ identity, errors: errorsProp, onChange, editable, t
               <Section.Row key={id} style={!editable && styles.borderedBottomStyle}>
                 <BrandIcon name={id} />
                 <Text>{identity[id].username}</Text>
-                {editable && (
-                  <Icon
-                    color={theme.colors.primary}
-                    name="close"
-                    size={28}
-                    style={styles.phoneIcon}
-                    onPress={onChange ? () => onChange(id) : null}
-                  />
-                )}
+                {editable &&
+                  (onChange ? (
+                    <Icon
+                      color={theme.colors.primary}
+                      name="close"
+                      size={28}
+                      style={styles.phoneIcon}
+                      onPress={onChange ? () => onChange(id) : null}
+                    />
+                  ) : (
+                    <Icon color={theme.colors.primary} name="close" size={28} style={styles.phoneIcon} />
+                  ))}
                 {errors.mobile && <Text>{errors.mobile}</Text>}
               </Section.Row>
             )

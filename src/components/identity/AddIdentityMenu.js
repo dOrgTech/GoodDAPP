@@ -61,6 +61,10 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   const keyExtractor = (item, index) => item
 
+  const handleVerifyPhoto = () => {
+    screenProps.push('AddHumanVerification')
+  }
+
   return (
     <Wrapper>
       <Section grow style={styles.Section}>
@@ -70,6 +74,15 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
+          <TouchableOpacity onPress={handleVerifyPhoto}>
+            <InputRounded
+              disabled={true}
+              iconName={'send'}
+              iconColor={theme.colors.primary}
+              iconSize={28}
+              value={'Take photo'}
+            />
+          </TouchableOpacity>
         </Section.Stack>
       </Section>
     </Wrapper>
