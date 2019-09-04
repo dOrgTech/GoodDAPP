@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { AsyncStorage, ScrollView, StyleSheet, View } from 'react-native'
 import { createSwitchNavigator } from '@react-navigation/core'
 import { isMobileSafari } from 'mobile-device-detect'
+import { GD_USER_MNEMONIC, IS_LOGGED_IN } from '../../lib/constants/localStorage'
 
 import NavBar from '../appNavigation/NavBar'
 import { navigationConfig } from '../appNavigation/navigationConfig'
@@ -58,10 +59,10 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
   const [loading, setLoading] = useState(false)
   const [countryCode, setCountryCode] = useState(undefined)
   const [createError, setCreateError] = useState(false)
+  const [finishedPromise, setFinishedPromise] = useState(undefined)
 
   const [showErrorDialog] = useErrorDialog()
   const shouldGrow = store.get && !store.get('isMobileSafariKeyboardShown')
-
   const navigateWithFocus = (routeKey: string) => {
     navigation.navigate(routeKey)
     setLoading(false)
@@ -88,13 +89,6 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
     }
   }
   useEffect(() => {
-    //don't allow to start signup flow not from begining
-    if (navigation.state.index > 0) {
-      log.debug('redirecting to start, got index:', navigation.state.index)
-      setLoading(true)
-      return navigateWithFocus(navigation.state.routes[0].key)
-    }
-
     //get user country code for phone
     getCountryCode()
 
@@ -119,6 +113,13 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
       return { goodWallet, userStorage }
     })()
     setReady(ready)
+
+    //don't allow to start signup flow not from begining
+    if (navigation.state.index > 0) {
+      log.debug('redirecting to start, got index:', navigation.state.index)
+      setLoading(true)
+      return navigateWithFocus(navigation.state.routes[0].key)
+    }
   }, [])
 
   const finishRegistration = async () => {
@@ -137,21 +138,36 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
 
       //first need to add user to our database
       // Stores creationBlock number into 'lastBlock' feed's node
+
+      const addUserAPIPromise = API.addUser(state)
+        .then(res => {
+          const data = res.data
+
+          if (data && data.loginToken) {
+            userStorage.setProfileField('loginToken', data.loginToken, 'private')
+          }
+        })
+        .catch(e => {
+          log.error(e.message, e)
+        })
+
       await Promise.all([
-        await API.addUser(state),
+        addUserAPIPromise,
         userStorage.setProfile({ ...state, walletAddress: goodWallet.account }),
         userStorage.setProfileField('registered', true, 'public'),
         goodWallet.getBlockNumber().then(creationBlock => userStorage.saveLastBlockNumber(creationBlock.toString())),
       ])
 
       //need to wait for API.addUser but we dont need to wait for it to finish
-      AsyncStorage.getItem('GD_USER_MNEMONIC').then(mnemonic => API.sendRecoveryInstructionByEmail(mnemonic)),
-        await AsyncStorage.setItem('GOODDAPP_isLoggedIn', true)
+      AsyncStorage.getItem(GD_USER_MNEMONIC).then(mnemonic => API.sendRecoveryInstructionByEmail(mnemonic)),
+        await AsyncStorage.setItem(IS_LOGGED_IN, true)
       log.debug('New user created')
+      return true
     } catch (e) {
       log.error('New user failure', e.message, e)
       showErrorDialog('New user creation failed, please go back and try again', e)
       setCreateError(true)
+      return false
     } finally {
       setLoading(false)
     }
@@ -159,10 +175,10 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
   const done = async (data: { [string]: string }) => {
     setLoading(true)
     fireSignupEvent()
-    log.info('signup data:', { data })
     let nextRoute = navigation.state.routes[navigation.state.index + 1]
     const newState = { ...state, ...data }
     setState(newState)
+    log.info('signup data:', { data, nextRoute })
 
     if (nextRoute && nextRoute.key === 'SMS') {
       try {
@@ -203,12 +219,15 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
       } finally {
         setLoading(false)
       }
-    } else {
-      if (nextRoute) {
-        return navigateWithFocus(nextRoute.key)
-      }
+    } else if (nextRoute) {
+      return navigateWithFocus(nextRoute.key)
+    }
 
-      //tell App.js we are done here so RouterSelector switches router
+    const ok = await finishedPromise
+    log.debug('user registration synced and completed', { ok })
+
+    //tell App.js we are done here so RouterSelector switches router
+    if (ok) {
       store.set('isLoggedIn')(true)
     }
   }
@@ -224,10 +243,15 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
 
   useEffect(() => {
     const curRoute = navigation.state.routes[navigation.state.index]
+    if (state === initialState) {
+      return
+    }
     if (curRoute && curRoute.key === 'SignupCompleted') {
-      finishRegistration()
+      const finishedPromise = finishRegistration()
+      setFinishedPromise(finishedPromise)
     }
   }, [navigation.state.index])
+
   const { scrollableContainer, contentContainer } = styles
 
   return (
