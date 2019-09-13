@@ -157,12 +157,12 @@ const EditProfile = ({ screenProps, theme, styles }) => {
   // Validate after saving profile state in order to show errors
   useEffect(() => {
     //need to pass parameters into memoized debounced method otherwise setX hooks wont work
-    validate(profile, storedProfile, identity, storedIdentity, setIsPristine, setErrors, setIsValid)
+    validate(profile, storedProfile, setIsPristine, setErrors, setIsValid)
   }, [profile])
 
   useEffect(() => {
     //need to pass parameters into memoized debounced method otherwise setX hooks wont work
-    validate(profile, storedProfile, identity, storedIdentity, setIsPristine, setErrors, setIsValid)
+    validate(profile, storedProfile, setIsPristine, setErrors, setIsValid)
   }, [identity])
 
   return (
