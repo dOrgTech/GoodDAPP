@@ -1,7 +1,9 @@
 // @flow
 import React from 'react'
-import GDStore from '../../lib/undux/GDStore'
-import { SaveButton, Section, Wrapper } from '../common'
+import { Clipboard, TouchableOpacity } from 'react-native'
+
+//import GDStore from '../../lib/undux/GDStore'
+import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import { useScreenState } from '../appNavigation/stackNavigation'
 import { withStyles } from '../../lib/styles'
@@ -60,41 +62,60 @@ const AddIdentity = ({ screenProps, theme, styles }) => {
   //   []
   // )
 
-  const store = GDStore.useStore()
-  const identity = store.get('identity')
+  //const store = GDStore.useStore()
+
+  //const identity = store.get('identity')
   const [screenState] = useScreenState(screenProps)
 
   const { name } = screenState
+  const verifyText = 'I am verifying my GoodDollar identity.'
 
-  const handleIdentityChange = newUsername => {
-    identity[name] = { username: newUsername }
-  }
+  // const handleIdentityChange = newUsername => {
+  //   identity[name] = { username: newUsername }
+  // }
 
-  const handleSaveButton = () => {
-    store.set('identity')(identity)
-    return identity[name].username
-  }
+  // const handleSaveButton = () => {
+  //   store.set('identity')(identity)
+  //   return identity[name].username
+  // }
 
-  const onIdentitySaved = () => {
-    screenProps.pop()
-    return identity[name].username
-  }
+  // const onIdentitySaved = () => {
+  //   screenProps.pop()
+  //   return identity[name].username
+  // }
   return (
     <Wrapper>
       <Section grow style={styles.section}>
         <Section.Row>
+          <Text>Please make a {name} post with the following:</Text>
+        </Section.Row>
+        <Section.Row>
+          <TouchableOpacity
+            onPress={async () => {
+              await Clipboard.setString(verifyText)
+            }}
+          >
+            <InputRounded
+              disabled={true}
+              icon="paste"
+              iconColor={theme.colors.primary}
+              iconSize={20}
+              value={verifyText}
+            />
+          </TouchableOpacity>
+        </Section.Row>
+        <Section.Row>
           <InputRounded
             disabled={false}
-            icon="profile"
+            icon="send"
             iconColor={theme.colors.primary}
             iconSize={20}
-            onChange={handleIdentityChange}
-            placeholder={'Add your ' + name + ' account'}
-            value={identity[name] ? identity[name].username : null}
+            onChange={() => undefined}
+            placeholder="Copy link to post here"
           />
         </Section.Row>
         <Section.Row>
-          <SaveButton onPress={handleSaveButton} onPressDone={onIdentitySaved} />
+          <SaveButton onPress={() => screenProps.pop()} />
         </Section.Row>
       </Section>
     </Wrapper>
