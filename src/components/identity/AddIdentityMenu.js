@@ -5,14 +5,13 @@ import { withStyles } from '../../lib/styles'
 import { Section, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
+import { displayNames } from './identities'
 
 const TITLE = 'Add Identity'
 
 // function filterObject(obj) {
 //   return pickBy(obj, (v, k) => v !== undefined && v !== '')
 // }
-
-const supportedIdentities = ['GitHub', 'Twitter', 'Facebook', 'LinkedIn']
 
 const arrayDiff = (a, b) => {
   return a.filter(x => !b.includes(x))
@@ -45,7 +44,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     return (
       <IdentityView
         theme={theme}
-        id={item}
+        id={displayNames[item]}
         style={styles.borderedBottomStyle}
         onPress={() => onAddIdentityPress(item)}
       />
@@ -66,7 +65,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       <Section grow style={styles.Section}>
         <Section.Stack>
           <FlatList
-            data={arrayDiff(supportedIdentities, Object.keys(storedIdentity))}
+            data={arrayDiff(Object.keys(displayNames), Object.keys(storedIdentity))}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
