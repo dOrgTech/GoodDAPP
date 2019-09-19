@@ -38,7 +38,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const identityPhotos = store.get('identityPhotos')
 
   const onAddIdentityPress = name => {
-    screenProps.push('AddIdentity', { name, theme, styles })
+    screenProps.push('GenericSocial', { name, theme, styles })
   }
 
   const renderItem = ({ item }) => {
