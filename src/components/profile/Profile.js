@@ -8,6 +8,7 @@ import IdentityDataTable from '../identity/IdentityDataTable'
 import AddIdentityMenu from '../identity/AddIdentityMenu'
 import UploadPhoto from '../identity/UploadPhoto'
 import AddIdentity from '../identity/AddIdentity'
+import GenericSocial from '../identity/GenericSocial'
 import AddHumanVerification from '../identity/AddHumanVerification'
 import AddPhotoId from '../identity/AddPhotoId'
 import FaceRecognition from '../dashboard/FaceRecognition/FaceRecognition'
@@ -94,6 +95,7 @@ export default createStackNavigator({
   EditAvatar,
   AddIdentityMenu,
   AddIdentity,
+  GenericSocial,
   FaceRecognition,
   AddHumanVerification,
   UploadPhoto,
