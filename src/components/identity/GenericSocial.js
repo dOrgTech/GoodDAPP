@@ -9,6 +9,7 @@ import InputRounded from '../common/form/InputRounded'
 // import InputText from '../common/form/InputText'
 import { useScreenState } from '../appNavigation/stackNavigation'
 import { withStyles } from '../../lib/styles'
+import { displayNames, postNames } from './identities'
 
 import ShareButton from './ShareButton'
 GenericSocial
@@ -25,7 +26,10 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section grow style={styles.section}>
         <Section.Row style={styles.row}>
-          <Text>Please make a {name} post with the following (tap to copy to clipboard):</Text>
+          <Text>
+            Please make a {displayNames[name]} {postNames[name]} with the following (tap the clipboard to copy, or press
+            share if you{"'"}re on mobile):
+          </Text>
         </Section.Row>
         <Section.Row style={styles.row}>
           <TouchableOpacity
@@ -44,7 +48,7 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
         </Section.Row>
 
         <Section.Row style={styles.row}>
-          <ShareButton title="Open [Social Media]" style={styles.button} />
+          <ShareButton name={name} style={styles.button} />
         </Section.Row>
 
         <Section.Row>

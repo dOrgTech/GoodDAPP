@@ -1,11 +1,17 @@
 import React, { Component } from 'react'
 import { Button, Share } from 'react-native'
+import { displayNames } from './identities'
 
 class ShareButton extends Component {
+  constructor(props) {
+    super(props)
+    this.name = props.name
+  }
+
   onShare = async () => {
     try {
       const result = await Share.share({
-        message: 'THIS IS WHERE WE CAN PRELOAD THE COPYPASTA',
+        message: this.post,
       })
 
       if (result.action === Share.sharedAction) {
@@ -24,7 +30,7 @@ class ShareButton extends Component {
   }
 
   render() {
-    return <Button onPress={this.onShare} title="Share to ${name}" />
+    return <Button onPress={this.onShare} title={'Share to ' + displayNames[this.name]} />
   }
 }
 
