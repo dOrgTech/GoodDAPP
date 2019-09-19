@@ -1,10 +1,14 @@
 // @flow
-import React from 'react'
+import React, { useState } from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
+import _ from 'lodash'
 import { withStyles } from '../../lib/styles'
-import { Section, Wrapper } from '../common'
+import { SaveButton, Section, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
+import API from '../../lib/API/api'
+
+import userStorage from '../../lib/gundb/UserStorage'
 import { displayNames } from './identities'
 
 const TITLE = 'Add Identity'
@@ -13,11 +17,7 @@ const TITLE = 'Add Identity'
 //   return pickBy(obj, (v, k) => v !== undefined && v !== '')
 // }
 
-const arrayDiff = (a, b) => {
-  return a.filter(x => !b.includes(x))
-}
-
-const IdentityView = ({ id, onPress, style, theme }) => (
+const IdentityView = ({ id, onPress, onChange, style, theme }) => (
   <TouchableOpacity onPress={onPress}>
     <Section.Row style={style}>
       <InputRounded
@@ -25,6 +25,7 @@ const IdentityView = ({ id, onPress, style, theme }) => (
         brand={id}
         iconColor={theme.colors.primary}
         iconSize={28}
+        onChange={onChange}
         value={'Verify ' + id + ' identity'}
       />
     </Section.Row>
@@ -33,11 +34,16 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const store = GDStore.useStore()
-  const storedIdentity = store.get('identity')
-  const identityPhotos = store.get('identityPhotos')
-
+  const storedProfile = store.get('profile')
+  const [socialPosts, setSocialPosts] = useState(storedProfile.socialPosts)
   const onAddIdentityPress = name => {
     screenProps.push('GenericSocial', { name, theme, styles })
+  }
+
+  const onAddIdentityChange = name => {
+    return url => {
+      setSocialPosts({ ...socialPosts, [name]: url })
+    }
   }
 
   const renderItem = ({ item }) => {
@@ -47,17 +53,23 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
         id={displayNames[item]}
         style={styles.borderedBottomStyle}
         onPress={() => onAddIdentityPress(item)}
+        onChange={() => onAddIdentityChange(item)}
       />
     )
   }
 
   const keyExtractor = (item, index) => item
 
-  const handleVerifyPhoto = () => {
-    screenProps.push('AddHumanVerification')
-  }
-  const handleVerifyPhotoId = () => {
-    screenProps.push('AddPhotoId')
+  // const handleVerifyPhoto = () => {
+  //   screenProps.push('AddHumanVerification')
+  // }
+  // const handleVerifyPhotoId = () => {
+  //   screenProps.push('AddPhotoId')
+  // }
+
+  const handleSave = () => {
+    userStorage.setSocialPosts(socialPosts)
+    API.proposeId({ ...storedProfile, socialPosts: { socialPosts } })
   }
 
   return (
@@ -65,11 +77,12 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       <Section grow style={styles.Section}>
         <Section.Stack>
           <FlatList
-            data={arrayDiff(Object.keys(displayNames), Object.keys(storedIdentity))}
+            data={_.difference(Object.keys(displayNames), Object.keys(storedProfile))}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
           />
-          {!identityPhotos.humanPhoto && (
+          {/*
+          {!profile.photo && (
             <TouchableOpacity onPress={handleVerifyPhoto}>
               <InputRounded
                 disabled={true}
@@ -80,7 +93,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
               />
             </TouchableOpacity>
           )}
-          {!identityPhotos.photoId && (
+          {!profile.photoId && (
             <TouchableOpacity onPress={handleVerifyPhotoId}>
               <InputRounded
                 disabled={true}
@@ -91,6 +104,8 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
               />
             </TouchableOpacity>
           )}
+          */}
+          <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
         </Section.Stack>
       </Section>
     </Wrapper>
