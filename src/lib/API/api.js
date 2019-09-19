@@ -20,11 +20,17 @@ export type Credentials = {
   jwt?: string,
 }
 
+export type SocialPostsRecord = {
+  twitter?: string,
+  github?: string,
+}
+
 export type UserRecord = NameRecord &
   EmailRecord &
   MobileRecord &
   Credentials & {
     username?: string,
+    socialPosts?: SocialPosts,
   }
 
 /**
@@ -112,6 +118,14 @@ class API {
    */
   addUser(user: UserRecord): AxiosPromise<any> {
     return this.client.post('/user/add', { user })
+  }
+
+  /**
+   * `/user/add` post api call
+   * @param {UserRecord} user
+   */
+  proposeId(user: UserRecord): AxiosPromise<any> {
+    return this.client.post('/user/proposeid', { user })
   }
 
   /**

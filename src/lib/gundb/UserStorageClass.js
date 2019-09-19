@@ -15,7 +15,9 @@ import values from 'lodash/values'
 import isEmail from 'validator/lib/isEmail'
 import Config from '../../config/config'
 import API from '../API/api'
-
+import _ from 'lodash'
+import isMobilePhone from '../validators/isMobilePhone'
+import validateSocialPosts from '../validators/validateSocialPosts'
 import pino from '../logger/pino-logger'
 import isMobilePhone from '../validators/isMobilePhone'
 import defaultGun from './gundb'
@@ -122,6 +124,8 @@ export const welcomeMessage = {
     },
   },
 }
+
+const syncProfileKeys = ['fullName', 'email', 'mobile', 'avatar', 'walletAddress', 'username', 'w3Token', 'loginToken']
 
 /**
  * Extracts transfer events sent to the current account
@@ -634,15 +638,15 @@ export class UserStorage {
    * @param {object} profile - User profile
    * @returns {UserModel} - User model with display values
    */
-  getDisplayProfile(profile: {}): UserModel {
-    const displayProfile = Object.keys(profile).reduce(
+  async getDisplayProfile(profile: {}): UserModel {
+    const displayProfile = _.intersection(Object.keys(profile), syncProfileKeys).reduce(
       (acc, currKey) => ({
         ...acc,
         [currKey]: profile[currKey].display,
       }),
       {}
     )
-    return getUserModel(displayProfile)
+    return await getUserModel(displayProfile)
   }
 
   /**
@@ -651,8 +655,8 @@ export class UserStorage {
    * @param {object} profile - user profile
    * @returns {object} UserModel with some inherit functions
    */
-  getPrivateProfile(profile: {}): Promise<UserModel> {
-    const keys = Object.keys(profile)
+  async getPrivateProfile(profile: {}): Promise<UserModel> {
+    const keys = _.intersection(Object.keys(profile), syncProfileKeys)
     return Promise.all(keys.map(currKey => this.getProfileFieldValue(currKey)))
       .then(values => {
         return values.reduce((acc, currValue, index) => {
@@ -660,7 +664,7 @@ export class UserStorage {
           return { ...acc, [currKey]: currValue }
         }, {})
       })
-      .then(getUserModel)
+      .then(await getUserModel)
   }
 
   subscribeProfileUpdates(callback: any => void) {
@@ -683,9 +687,9 @@ export class UserStorage {
    * @returns {Promise} Promise with profile settings updates and privacy validations
    * @throws Error if profile is invalid
    */
-  setProfile(profile: UserModel, update: boolean = false): Promise<> {
+  async setProfile(profile: UserModel, update: boolean = false): Promise<> {
     if (profile && !profile.validate) {
-      profile = getUserModel(profile)
+      profile = await getUserModel(profile)
     }
     const { errors, isValid } = profile.validate(update)
     if (!isValid) {
@@ -723,6 +727,38 @@ export class UserStorage {
       const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
       if (errors.length > 0) {
         logger.error('setProfile some fields failed', errors.length, errors, JSON.stringify(errors))
+        if (Config.throwSaveProfileErrors) {
+          return Promise.reject(errors)
+        }
+      }
+      return true
+    })
+  }
+
+  async setSocialPosts(socialPosts: SocialPostsRecord, update: boolean = false): Promise<> {
+    const socialPostErrors = await validateSocialPosts(socialPosts)
+    if (socialPostErrors !== {}) {
+      logger.error('setProfile failed:', {})
+      if (Config.throwSaveProfileErrors) {
+        return Promise.reject(socialPostErrors)
+      }
+    }
+
+    const socialPostPrivacy = 'public'
+
+    const getPrivacy = async () => {
+      const currentPrivacy = await this.profile.get('socialPosts').get('privacy')
+      return currentPrivacy || socialPostPrivacy || 'public'
+    }
+    return Promise.resolve(async () => {
+      return this.setProfileField('socialPosts', socialPosts, await getPrivacy()).catch(e => {
+        logger.error('setSocialPosts failed:', '', e.message, e)
+        return { err: `failed saving field` }
+      })
+    }).then(results => {
+      const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
+      if (errors.length > 0) {
+        logger.error('setSocialPosts failed', errors.length, errors, JSON.stringify(errors))
         if (Config.throwSaveProfileErrors) {
           return Promise.reject(errors)
         }

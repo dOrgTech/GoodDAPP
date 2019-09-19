@@ -3,6 +3,7 @@ import isEmail from 'validator/lib/isEmail'
 import type { UserRecord } from '../API/api'
 import isMobilePhone from '../validators/isMobilePhone'
 import isValidUsername from '../validators/isValidUsername'
+import validateSocialPosts from '../validators/validateSocialPosts'
 
 /**
  * validation object type
@@ -77,6 +78,7 @@ export const userModelValidations = {
   email: getEmailErrorMessage,
   mobile: getMobileErrorMessage,
   username: getUsernameErrorMessage,
+  socialPosts: validateSocialPosts,
 }
 
 /**
@@ -85,7 +87,7 @@ export const userModelValidations = {
  * @param {UserRecord} record - User record
  * @returns {UserModel} User model with some available methods
  */
-export const getUserModel = (record: UserRecord): UserModel => {
+export const getUserModel = async (record: UserRecord): UserModel => {
   const _isValid = errors => Object.keys(errors).every(key => errors[key] === '')
 
   return {
@@ -99,6 +101,10 @@ export const getUserModel = (record: UserRecord): UserModel => {
         email: update === false || this.email ? userModelValidations.email(this.email) : '',
         mobile: update === false || this.mobile ? userModelValidations.mobile(this.mobile) : '',
         username: update === false || this.username ? userModelValidations.username(this.username) : '',
+        socialPosts:
+          update == false || (this.socialPosts && this.socialPosts != {})
+            ? userModelValidations.socialPosts(this.socialPosts)
+            : {},
       }
     },
     validate: function(update: boolean = false) {
