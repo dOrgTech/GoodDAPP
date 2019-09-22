@@ -87,28 +87,28 @@ export const userModelValidations = {
  * @param {UserRecord} record - User record
  * @returns {UserModel} User model with some available methods
  */
-export const getUserModel = async (record: UserRecord): UserModel => {
+export const getUserModel = (record: UserRecord): UserModel => {
   const _isValid = errors => Object.keys(errors).every(key => errors[key] === '')
 
   return {
     ...record,
-    isValid: function(update: boolean = false) {
-      const errors = this.getErrors(update)
+    isValid: async function(update: boolean = false) {
+      const errors = await this.getErrors(update)
       return _isValid(errors)
     },
-    getErrors: function(update: boolean = false) {
+    getErrors: async function(update: boolean = false) {
       return {
         email: update === false || this.email ? userModelValidations.email(this.email) : '',
         mobile: update === false || this.mobile ? userModelValidations.mobile(this.mobile) : '',
         username: update === false || this.username ? userModelValidations.username(this.username) : '',
         socialPosts:
           update == false || (this.socialPosts && this.socialPosts != {})
-            ? userModelValidations.socialPosts(this.socialPosts)
+            ? await userModelValidations.socialPosts(this.socialPosts)
             : {},
       }
     },
-    validate: function(update: boolean = false) {
-      const errors = this.getErrors(update)
+    validate: async function(update: boolean = false) {
+      const errors = await this.getErrors(update)
       return { isValid: _isValid(errors), errors }
     },
   }

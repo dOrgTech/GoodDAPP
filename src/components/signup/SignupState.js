@@ -173,6 +173,7 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
     }
   }
   const done = async (data: { [string]: string }) => {
+    debugger
     setLoading(true)
     fireSignupEvent()
     let nextRoute = navigation.state.routes[navigation.state.index + 1]

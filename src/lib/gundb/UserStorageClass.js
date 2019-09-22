@@ -14,9 +14,11 @@ import values from 'lodash/values'
 import keys from 'lodash/keys'
 import isEmail from 'validator/lib/isEmail'
 import Mutex from 'await-mutex'
-import _ from 'lodash'
+
+// import _ from 'lodash'
 import isMobilePhone from '../validators/isMobilePhone'
-import validateSocialPosts from '../validators/validateSocialPosts'
+
+// import validateSocialPosts from '../validators/validateSocialPosts'
 import pino from '../logger/pino-logger'
 import API from '../API/api'
 import Config from '../../config/config'
@@ -125,8 +127,6 @@ export const welcomeMessage = {
   },
 }
 
-const syncProfileKeys = ['fullName', 'email', 'mobile', 'avatar', 'walletAddress', 'username', 'w3Token', 'loginToken']
-
 /**
  * Extracts transfer events sent to the current account
  * @param {object} receipt - Receipt event
@@ -179,6 +179,7 @@ export const getOperationType = (data: any, account: string) => {
  * User storage is used to keep the user Self Soverign Profile and his blockchain transcation history
  * @class
  *  */
+
 export class UserStorage {
   /**
    * wallet an instance of GoodWallet
@@ -575,15 +576,15 @@ export class UserStorage {
    * @param {object} profile - User profile
    * @returns {UserModel} - User model with display values
    */
-  async getDisplayProfile(profile: {}): UserModel {
-    const displayProfile = _.intersection(Object.keys(profile), syncProfileKeys).reduce(
+  getDisplayProfile(profile: {}): UserModel {
+    const displayProfile = Object.keys(profile).reduce(
       (acc, currKey) => ({
         ...acc,
         [currKey]: profile[currKey].display,
       }),
       {}
     )
-    return await getUserModel(displayProfile)
+    return getUserModel(displayProfile)
   }
 
   /**
@@ -592,8 +593,8 @@ export class UserStorage {
    * @param {object} profile - user profile
    * @returns {object} UserModel with some inherit functions
    */
-  async getPrivateProfile(profile: {}): Promise<UserModel> {
-    const keys = _.intersection(Object.keys(profile), syncProfileKeys)
+  getPrivateProfile(profile: {}): Promise<UserModel> {
+    const keys = Object.keys(profile)
     return Promise.all(keys.map(currKey => this.getProfileFieldValue(currKey)))
       .then(values => {
         return values.reduce((acc, currValue, index) => {
@@ -601,7 +602,7 @@ export class UserStorage {
           return { ...acc, [currKey]: currValue }
         }, {})
       })
-      .then(await getUserModel)
+      .then(getUserModel)
   }
 
   subscribeProfileUpdates(callback: any => void) {
@@ -626,9 +627,9 @@ export class UserStorage {
    */
   async setProfile(profile: UserModel, update: boolean = false): Promise<> {
     if (profile && !profile.validate) {
-      profile = await getUserModel(profile)
+      profile = getUserModel(profile)
     }
-    const { errors, isValid } = profile.validate(update)
+    const { errors, isValid } = await profile.validate(update)
     if (!isValid) {
       logger.error('setProfile failed:', { errors })
       if (Config.throwSaveProfileErrors) {
@@ -645,6 +646,14 @@ export class UserStorage {
       username: { defaultPrivacy: 'public' },
       w3Token: { defaultPrivacy: 'private' },
       loginToken: { defaultPrivacy: 'private' },
+      socialPosts: {
+        defaultPrivacy: 'public',
+
+        /*
+        twitter: { defaultPrivacy: 'public' },
+        github: {defaultPrivacy: 'public' }
+        */
+      },
     }
     const getPrivacy = async field => {
       const currentPrivacy = await this.profile.get(field).get('privacy')
@@ -671,37 +680,37 @@ export class UserStorage {
     })
   }
 
-  async setSocialPosts(socialPosts: SocialPostsRecord, update: boolean = false): Promise<> {
-    const socialPostErrors = await validateSocialPosts(socialPosts)
-    if (socialPostErrors !== {}) {
-      logger.error('setProfile failed:', {})
-      if (Config.throwSaveProfileErrors) {
-        return Promise.reject(socialPostErrors)
-      }
-    }
+  // async setSocialPosts(socialPosts: SocialPostsRecord, update: boolean = false): Promise<> {
+  //   const socialPostErrors = await validateSocialPosts(socialPosts)
+  //   if (socialPostErrors !== {}) {
+  //     logger.error('setProfile failed:', {})
+  //     if (Config.throwSaveProfileErrors) {
+  //       return Promise.reject(socialPostErrors)
+  //     }
+  //   }
 
-    const socialPostPrivacy = 'public'
+  //   const socialPostPrivacy = 'public'
 
-    const getPrivacy = async () => {
-      const currentPrivacy = await this.profile.get('socialPosts').get('privacy')
-      return currentPrivacy || socialPostPrivacy || 'public'
-    }
-    return Promise.resolve(async () => {
-      return this.setProfileField('socialPosts', socialPosts, await getPrivacy()).catch(e => {
-        logger.error('setSocialPosts failed:', '', e.message, e)
-        return { err: `failed saving field` }
-      })
-    }).then(results => {
-      const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
-      if (errors.length > 0) {
-        logger.error('setSocialPosts failed', errors.length, errors, JSON.stringify(errors))
-        if (Config.throwSaveProfileErrors) {
-          return Promise.reject(errors)
-        }
-      }
-      return true
-    })
-  }
+  //   const getPrivacy = async () => {
+  //     const currentPrivacy = await this.profile.get('socialPosts').get('privacy')
+  //     return currentPrivacy || socialPostPrivacy || 'public'
+  //   }
+  //   return Promise.resolve(async () => {
+  //     return this.setProfileField('socialPosts', socialPosts, await getPrivacy()).catch(e => {
+  //       logger.error('setSocialPosts failed:', '', e.message, e)
+  //       return { err: `failed saving field` }
+  //     })
+  //   }).then(results => {
+  //     const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
+  //     if (errors.length > 0) {
+  //       logger.error('setSocialPosts failed', errors.length, errors, JSON.stringify(errors))
+  //       if (Config.throwSaveProfileErrors) {
+  //         return Promise.reject(errors)
+  //       }
+  //     }
+  //     return true
+  //   })
+  // }
 
   /**
    *
