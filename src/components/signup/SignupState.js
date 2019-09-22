@@ -274,6 +274,7 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
   }
 
   const done = async (data: { [string]: string }) => {
+    debugger
     setLoading(true)
     fireSignupEvent()
     log.info('signup data:', { data })
