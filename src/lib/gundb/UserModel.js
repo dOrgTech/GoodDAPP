@@ -102,9 +102,7 @@ export const getUserModel = (record: UserRecord): UserModel => {
         mobile: update === false || this.mobile ? userModelValidations.mobile(this.mobile) : '',
         username: update === false || this.username ? userModelValidations.username(this.username) : '',
         socialPosts:
-          update == false || (this.socialPosts && this.socialPosts != {})
-            ? await userModelValidations.socialPosts(this.socialPosts)
-            : {},
+          update == false || this.socialPosts ? await userModelValidations.socialPosts(this.socialPosts) : '',
       }
     },
     validate: async function(update: boolean = false) {
