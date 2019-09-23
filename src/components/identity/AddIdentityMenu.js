@@ -7,6 +7,7 @@ import { SaveButton, Section, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
+import { useScreenState } from '../appNavigation/stackNavigation'
 
 import userStorage from '../../lib/gundb/UserStorage'
 import { displayNames } from './identities'
@@ -17,7 +18,7 @@ const TITLE = 'Add Identity'
 //   return pickBy(obj, (v, k) => v !== undefined && v !== '')
 // }
 
-const IdentityView = ({ id, onPress, onChange, style, theme }) => (
+const IdentityView = ({ id, onPress, style, theme }) => (
   <TouchableOpacity onPress={onPress}>
     <Section.Row style={style}>
       <InputRounded
@@ -25,7 +26,6 @@ const IdentityView = ({ id, onPress, onChange, style, theme }) => (
         brand={id}
         iconColor={theme.colors.primary}
         iconSize={28}
-        onChange={onChange}
         value={'Verify ' + id + ' identity'}
       />
     </Section.Row>
@@ -33,17 +33,16 @@ const IdentityView = ({ id, onPress, onChange, style, theme }) => (
 )
 
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
+  const [screenState] = useScreenState(screenProps)
+  const { profile: screenProfile } = screenState
   const store = GDStore.useStore()
-  const storedProfile = store.get('profile')
-  const [socialPosts, setSocialPosts] = useState(storedProfile.socialPosts)
-  const onAddIdentityPress = name => {
-    screenProps.push('GenericSocial', { name, theme, styles })
-  }
+  const storedProfile = screenProfile ? screenProfile : store.get('privateProfile')
 
-  const onAddIdentityChange = name => {
-    return url => {
-      setSocialPosts({ ...socialPosts, [name]: url })
-    }
+  // console.log('privateprofile')
+  // console.dir(storedProfile.validate())
+  const [profile] = useState(storedProfile)
+  const onAddIdentityPress = name => {
+    screenProps.push('GenericSocial', { name, theme, styles, profile })
   }
 
   const renderItem = ({ item }) => {
@@ -53,7 +52,6 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
         id={displayNames[item]}
         style={styles.borderedBottomStyle}
         onPress={() => onAddIdentityPress(item)}
-        onChange={() => onAddIdentityChange(item)}
       />
     )
   }
@@ -68,8 +66,10 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   // }
 
   const handleSave = () => {
-    userStorage.setSocialPosts(socialPosts)
-    API.proposeId({ ...storedProfile, socialPosts: { socialPosts } })
+    console.log('PROFILE BEING SET')
+    console.dir(profile)
+    userStorage.setProfile(profile)
+    API.proposeId({ ...profile })
   }
 
   return (

@@ -1,5 +1,5 @@
 // @flow
-import React from 'react'
+import React, { useState } from 'react'
 import { Clipboard, TouchableOpacity } from 'react-native'
 
 //import GDStore from '../../lib/undux/GDStore'
@@ -12,14 +12,19 @@ import { withStyles } from '../../lib/styles'
 import { displayNames, postNames } from './identities'
 
 import ShareButton from './ShareButton'
-GenericSocial
 
 const TITLE = 'Add Identity'
 
 const GenericSocial = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
 
-  const { name } = screenState
+  const { name, profile: screenProfile } = screenState
+  const [profile, setProfile] = useState(screenProfile)
+  const onChange = url => {
+    const newprofile = { ...profile, socialPosts: { ...profile.socialPosts, [name]: url } }
+    setProfile(newprofile)
+  }
+
   const verifyText = 'I am verifying my GoodDollar identity. 0xAb1235019238'
 
   return (
@@ -57,12 +62,16 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
             icon="send"
             iconColor={theme.colors.primary}
             iconSize={20}
-            onChange={() => undefined}
+            onChange={onChange}
             placeholder="Copy link to post here"
           />
         </Section.Row>
         <Section.Row>
-          <SaveButton onPress={() => screenProps.pop()} />
+          <SaveButton
+            onPress={() => {
+              screenProps.pop({ profile })
+            }}
+          />
         </Section.Row>
       </Section>
     </Wrapper>
