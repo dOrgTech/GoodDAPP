@@ -2,7 +2,7 @@
 import React from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
 
-// import _ from 'lodash'
+import _ from 'lodash'
 import { withStyles } from '../../lib/styles'
 import { SaveButton, Section, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
@@ -12,6 +12,7 @@ import { useScreenState } from '../appNavigation/stackNavigation'
 
 import userStorage from '../../lib/gundb/UserStorage'
 import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-client'
+import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { displayNames } from './identities'
 
 const TITLE = 'Add Identity'
@@ -38,6 +39,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
   const store = GDStore.useStore()
   const profile = store.get('privateProfile')
+  const [showErrorDialog] = useErrorDialog()
 
   const identity = screenState.identity ? screenState.identity : new IdentityDefinitionForm()
   if (!screenState.identity) {
@@ -86,11 +88,21 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   //   screenProps.push('AddPhotoId')
   // }
 
-  const handleSave = () => {
-    console.log('PROFILE BEING SET')
-    console.dir(profile)
-    userStorage.setProfile(profile)
-    API.proposeId({ ...profile })
+  const handleSave = async () => {
+    //const res = identity.validate()
+    const res = await identity.$.socialPosts.validate
+    if (res.hasError) {
+      showErrorDialog(
+        _.transform(identity.$.socialPosts.$, (acc, val, key) => {
+          if (val.error) {
+            acc = acc + '\n' + val.error
+          }
+        })
+      )
+    } else {
+      userStorage.setProfile(profile)
+      API.proposeId({ ...profile })
+    }
   }
 
   return (
