@@ -1,7 +1,8 @@
 // @flow
-import React, { useState } from 'react'
+import React from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
-import _ from 'lodash'
+
+// import _ from 'lodash'
 import { withStyles } from '../../lib/styles'
 import { SaveButton, Section, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
@@ -10,6 +11,7 @@ import API from '../../lib/API/api'
 import { useScreenState } from '../appNavigation/stackNavigation'
 
 import userStorage from '../../lib/gundb/UserStorage'
+import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-client'
 import { displayNames } from './identities'
 
 const TITLE = 'Add Identity'
@@ -34,15 +36,35 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
-  const { profile: screenProfile } = screenState
   const store = GDStore.useStore()
-  const storedProfile = screenProfile ? screenProfile : store.get('privateProfile')
+  const profile = store.get('privateProfile')
 
-  // console.log('privateprofile')
-  // console.dir(storedProfile.validate())
-  const [profile] = useState(storedProfile)
+  const identity = screenState.identity ? screenState.identity : new IdentityDefinitionForm()
+  if (!screenState.identity) {
+    identity.$.address.data = '0xfD0174784EbCe943bdb8832Ecdea9Fea30e7C7A9'
+  }
+
+  //const [socialPosts, setSocialPosts] = useState({})
+
+  // useEffect(() => {
+  //   const valRes = identity.$.socialPosts.validate()
+  //   const socialPostErrors = {}
+  //   if (valRes.hasError) {
+  //     Object.keys(socialPosts).forEach(key => {
+  //       socialPostErrors[key] = identity.$.socialPosts.$[key].error
+  //     })
+  //   }
+  //   setSocialPosts(identity)
+  // }, [])
+  console.log(Object.keys(identity.$.socialPosts.$))
+
   const onAddIdentityPress = name => {
-    screenProps.push('GenericSocial', { name, theme, styles, profile })
+    screenProps.push('GenericSocial', {
+      name,
+      theme,
+      styles,
+      identity,
+    })
   }
 
   const renderItem = ({ item }) => {
@@ -76,11 +98,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section grow style={styles.Section}>
         <Section.Stack>
-          <FlatList
-            data={_.difference(Object.keys(displayNames), Object.keys(storedProfile))}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-          />
+          <FlatList data={Object.keys(identity.$.socialPosts.$)} keyExtractor={keyExtractor} renderItem={renderItem} />
           {/*
           {!profile.photo && (
             <TouchableOpacity onPress={handleVerifyPhoto}>

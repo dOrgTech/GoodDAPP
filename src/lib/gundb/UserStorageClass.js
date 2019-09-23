@@ -625,11 +625,11 @@ export class UserStorage {
    * @returns {Promise} Promise with profile settings updates and privacy validations
    * @throws Error if profile is invalid
    */
-  async setProfile(profile: UserModel, update: boolean = false): Promise<> {
+  setProfile(profile: UserModel, update: boolean = false): Promise<> {
     if (profile && !profile.validate) {
       profile = getUserModel(profile)
     }
-    const { errors, isValid } = await profile.validate(update)
+    const { errors, isValid } = profile.validate(update)
     if (!isValid) {
       logger.error('setProfile failed:', { errors })
       if (Config.throwSaveProfileErrors) {
@@ -646,14 +646,6 @@ export class UserStorage {
       username: { defaultPrivacy: 'public' },
       w3Token: { defaultPrivacy: 'private' },
       loginToken: { defaultPrivacy: 'private' },
-      socialPosts: {
-        defaultPrivacy: 'public',
-
-        /*
-        twitter: { defaultPrivacy: 'public' },
-        github: {defaultPrivacy: 'public' }
-        */
-      },
     }
     const getPrivacy = async field => {
       const currentPrivacy = await this.profile.get(field).get('privacy')
@@ -679,6 +671,53 @@ export class UserStorage {
       return true
     })
   }
+
+  // setSocialPosts(socialPosts, update: boolean = false): Promise<> {
+  //   if (profile && !profile.validate) {
+  //     profile = getUserModel(profile)
+  //   }
+  //   const errors = userModelValidations.socialPosts(socialPosts
+  //   if (!isValid) {
+  //     logger.error('setProfile failed:', { errors })
+  //     if (Config.throwSaveProfileErrors) {
+  //       return Promise.reject(errors)
+  //     }
+  //   }
+
+  //   const profileSettings = {
+  //     fullName: { defaultPrivacy: 'public' },
+  //     email: { defaultPrivacy: 'private' },
+  //     mobile: { defaultPrivacy: 'private' },
+  //     avatar: { defaultPrivacy: 'public' },
+  //     walletAddress: { defaultPrivacy: 'public' },
+  //     username: { defaultPrivacy: 'public' },
+  //     w3Token: { defaultPrivacy: 'private' },
+  //     loginToken: { defaultPrivacy: 'private' },
+  //   }
+  //   const getPrivacy = async field => {
+  //     const currentPrivacy = await this.profile.get(field).get('privacy')
+  //     return currentPrivacy || profileSettings[field].defaultPrivacy || 'public'
+  //   }
+  //   return Promise.all(
+  //     keys(profileSettings)
+  //       .filter(key => profile[key])
+  //       .map(async field => {
+  //         return this.setProfileField(field, profile[field], await getPrivacy(field)).catch(e => {
+  //           logger.error('setProfile field failed:', { field }, e.message, e)
+  //           return { err: `failed saving field ${field}` }
+  //         })
+  //       })
+  //   ).then(results => {
+  //     const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
+  //     if (errors.length > 0) {
+  //       logger.error('setProfile some fields failed', errors.length, errors, JSON.stringify(errors))
+  //       if (Config.throwSaveProfileErrors) {
+  //         return Promise.reject(errors)
+  //       }
+  //     }
+  //     return true
+  //   })
+  // }
 
   // async setSocialPosts(socialPosts: SocialPostsRecord, update: boolean = false): Promise<> {
   //   const socialPostErrors = await validateSocialPosts(socialPosts)

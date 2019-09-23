@@ -92,21 +92,19 @@ export const getUserModel = (record: UserRecord): UserModel => {
 
   return {
     ...record,
-    isValid: async function(update: boolean = false) {
-      const errors = await this.getErrors(update)
+    isValid: function(update: boolean = false) {
+      const errors = this.getErrors(update)
       return _isValid(errors)
     },
-    getErrors: async function(update: boolean = false) {
+    getErrors: function(update: boolean = false) {
       return {
         email: update === false || this.email ? userModelValidations.email(this.email) : '',
         mobile: update === false || this.mobile ? userModelValidations.mobile(this.mobile) : '',
         username: update === false || this.username ? userModelValidations.username(this.username) : '',
-        socialPosts:
-          update == false || this.socialPosts ? await userModelValidations.socialPosts(this.socialPosts) : '',
       }
     },
-    validate: async function(update: boolean = false) {
-      const errors = await this.getErrors(update)
+    validate: function(update: boolean = false) {
+      const errors = this.getErrors(update)
       return { isValid: _isValid(errors), errors }
     },
   }

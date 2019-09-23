@@ -18,11 +18,22 @@ const TITLE = 'Add Identity'
 const GenericSocial = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
 
-  const { name, profile: screenProfile } = screenState
-  const [profile, setProfile] = useState(screenProfile)
-  const onChange = url => {
-    const newprofile = { ...profile, socialPosts: { ...profile.socialPosts, [name]: url } }
-    setProfile(newprofile)
+  const { name, identity } = screenState
+  const field = identity.$.socialPosts.$[name]
+  const [error, setError] = useState()
+  const [post, setPost] = useState()
+  const onChange = async url => {
+    field.value = url
+    const res = await field.validate()
+    if (res.hasError) {
+      setError(field.error)
+    } else {
+      setPost(field.value)
+      setError()
+    }
+  }
+  const onPress = () => {
+    screenProps.pop({ identity })
   }
 
   const verifyText = 'I am verifying my GoodDollar identity. 0xAb1235019238'
@@ -58,20 +69,18 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
 
         <Section.Row>
           <InputRounded
+            error={error != {} && error}
             disabled={false}
             icon="send"
             iconColor={theme.colors.primary}
             iconSize={20}
             onChange={onChange}
             placeholder="Copy link to post here"
+            value={post}
           />
         </Section.Row>
         <Section.Row>
-          <SaveButton
-            onPress={() => {
-              screenProps.pop({ profile })
-            }}
-          />
+          <SaveButton onPress={onPress} />
         </Section.Row>
       </Section>
     </Wrapper>
