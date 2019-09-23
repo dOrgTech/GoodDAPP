@@ -56,7 +56,6 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   //   }
   //   setSocialPosts(identity)
   // }, [])
-  console.log(Object.keys(identity.$.socialPosts.$))
 
   const onAddIdentityPress = name => {
     screenProps.push('GenericSocial', {
