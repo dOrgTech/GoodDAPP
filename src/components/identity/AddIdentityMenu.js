@@ -110,6 +110,12 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       <Section grow style={styles.Section}>
         <Section.Stack>
           <FlatList data={Object.keys(identity.$.socialPosts.$)} keyExtractor={keyExtractor} renderItem={renderItem} />
+          <IdentityView
+            theme={theme}
+            id={'photo'}
+            style={styles.borderedBottomStyle}
+            onPress={() => screenProps.push('UploadPhoto', { from: 'AddIdentityMenu' })}
+          />
           {/*
           {!profile.photo && (
             <TouchableOpacity onPress={handleVerifyPhoto}>
