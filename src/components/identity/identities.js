@@ -6,6 +6,7 @@ const postNames = {
 const displayNames = {
   github: 'GitHub',
   twitter: 'Twitter',
+  photo: 'Photo',
 }
 
 export { postNames, displayNames }
