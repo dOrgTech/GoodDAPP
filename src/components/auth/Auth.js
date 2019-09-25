@@ -31,7 +31,7 @@ const log = logger.child({ from: 'Auth' })
 
 class Auth extends React.Component<Props> {
   state = {
-    asGuest: false,
+    asGuest: true,
   }
 
   async componentWillMount() {
