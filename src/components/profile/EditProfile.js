@@ -3,11 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react'
 import debounce from 'lodash/debounce'
 import isEqualWith from 'lodash/isEqualWith'
 import isEqual from 'lodash/isEqual'
-
 import merge from 'lodash/merge'
 import pickBy from 'lodash/pickBy'
 
-//import IdentityDataTable from '../identity/IdentityDataTable'
 import userStorage from '../../lib/gundb/UserStorage'
 import logger from '../../lib/logger/pino-logger'
 import GDStore from '../../lib/undux/GDStore'
