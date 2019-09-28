@@ -16,12 +16,15 @@ class ShareButton extends Component {
 
       if (result.action === Share.sharedAction) {
         if (result.activityType) {
+          // TODO:
           // shared with activity type of result.activityType
         } else {
+          // TODO:
           // shared
           // NOTHING
         }
       } else if (result.action === Share.dismissedAction) {
+        // TODO:
         // dismissed
       }
     } catch (error) {

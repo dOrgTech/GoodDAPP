@@ -2,17 +2,12 @@
 import React from 'react'
 import { Clipboard, TouchableOpacity } from 'react-native'
 
-//import GDStore from '../../lib/undux/GDStore'
 import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
-
-// import InputText from '../common/form/InputText'
 import { useScreenState } from '../appNavigation/stackNavigation'
 import { withStyles } from '../../lib/styles'
 import { displayNames, postNames } from './identities'
-
 import ShareButton from './ShareButton'
-GenericSocial
 
 const TITLE = 'Add Identity'
 
