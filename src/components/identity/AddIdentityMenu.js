@@ -9,8 +9,6 @@ import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
 import { useScreenState } from '../appNavigation/stackNavigation'
-
-import userStorage from '../../lib/gundb/UserStorage'
 import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-client'
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { displayNames } from './identities'
@@ -38,13 +36,19 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
   const store = GDStore.useStore()
-  const profile = store.get('privateProfile')
+  const storedIdentity = store.get('identity')
   const [showErrorDialog] = useErrorDialog()
+  const identityForm = _.hasIn(screenState,'identity.form') ? screenState.identity.form : new IdentityDefinitionForm()
+  const identity = { ...storedIdentity}
+  Object.assign(identity)
 
-  const identity = screenState.identity ? screenState.identity : new IdentityDefinitionForm()
-  if (!screenState.identity) {
-    identity.$.address.data = '0xfD0174784EbCe943bdb8832Ecdea9Fea30e7C7A9'
+  if (_.hasIn(screenState,'identity.form') ) {
+    if (storedIdentity.json) {
+      identityForm.$.data = storedIdentity.json
+    }
   }
+  Object.assign(...storedIdentity, screenState.video ? screenState
+
 
   //const [socialPosts, setSocialPosts] = useState({})
 
@@ -64,7 +68,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       name,
       theme,
       styles,
-      identity,
+      identityForm,
     })
   }
 
@@ -90,18 +94,26 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   const handleSave = async () => {
     //const res = identity.validate()
-    const res = await identity.$.socialPosts.validate
+    const res = await identityForm.$.socialPosts.validate
     if (res.hasError) {
       showErrorDialog(
-        _.transform(identity.$.socialPosts.$, (acc, val, key) => {
+        _.transform(identityForm.$.socialPosts.$, (acc, val, key) => {
           if (val.error) {
             acc = acc + '\n' + val.error
           }
         })
       )
     } else {
-      userStorage.setProfile(profile)
-      API.proposeId({ ...profile })
+      store.set('identity')({ ...identity })
+      let photo = { uri: source.uri}
+      let formdata = new FormData();
+
+      formdata.append("product[name]", 'test')
+      formdata.append("product[price]", 10)
+      formdata.append("product[category_ids][]", 2)
+      formdata.append("product[description]", '12dsadadsa')
+      formdata.append("product[images_attributes[0][file]]", {uri: photo.uri, name: 'image.jpg', type: 'image/jpeg'})
+      API.proposeId({ ...identity })
     }
   }
 
@@ -109,12 +121,16 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section grow style={styles.Section}>
         <Section.Stack>
-          <FlatList data={Object.keys(identity.$.socialPosts.$)} keyExtractor={keyExtractor} renderItem={renderItem} />
+          <FlatList
+            data={Object.keys(identityForm.$.socialPosts.$)}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+          />
           <IdentityView
             theme={theme}
             id={'photo'}
             style={styles.borderedBottomStyle}
-            onPress={() => screenProps.push('UploadPhoto', { from: 'AddIdentityMenu' })}
+            onPress={() => screenProps.push('UploadPhoto', { from: 'AddIdentityMenu',  })}
           />
           {/*
           {!profile.photo && (

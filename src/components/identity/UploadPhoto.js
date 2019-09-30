@@ -1,11 +1,11 @@
 // @flow
 import React from 'react'
-import CreateAvatar from 'exif-react-avatar-edit'
-import { View } from 'react-native'
+import ImagePicker from 'react-native-image-picker'
+import { Image, View } from 'react-native'
+import _ from 'lodash'
 import { getScreenHeight, getScreenWidth, isPortrait } from '../../lib/utils/Orientation'
 import { CustomButton, Section, Wrapper } from '../common'
 import GDStore from '../../lib/undux/GDStore'
-
 import { useScreenState } from '../appNavigation/stackNavigation'
 
 import { withStyles } from '../../lib/styles'
@@ -34,6 +34,16 @@ export type UploadPhotoProps = {
  * @param {React.Node} props.children
  * @returns {React.Node}
  */
+
+const fileSigTypes = {
+  // mp4 4 bytes offset
+  mp4: { raw: Buffer.from('667479704D534E56', 'hex'), size: 8, offset: 4 },
+  webm: { raw: Buffer.from('1A45DFA3', 'hex'), size: 4, offset: 0 },
+  ogg: { raw: Buffer.from('4F67675300020000000000000000', 'hex'), size: 14 },
+}
+
+const MAX_SIG_LEN = 20
+
 const UploadPhoto = (props: UploadPhotoProps) => {
   const { screenProps, styles, theme } = props
 
@@ -43,12 +53,36 @@ const UploadPhoto = (props: UploadPhotoProps) => {
   const store = GDStore.useStore()
   const identity = store.get('identityPhotos')
   const [screenState] = useScreenState(screenProps)
-
-  const { photoType, onChange, onClose } = screenState
-
+  const [showErrorDialog] = useErrorDialog()
+  const { mediaType } = screenState
+  const [media, setMedia] = useState(undefined)
+  const chooseFile = () => {
+    var options = {
+      title: 'Select ' + mediaType,
+      mediaType,
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    }
+    ImagePicker.showImagePicker(options, response => {
+      const head = Buffer.from(response.data[(0, MAX_SIG_LEN)], 'base64')
+      if (mediaType === 'video') {
+        _.forEach(fileSigTypes, (val, key) => {
+          if (head.subarray(val.offset, val.size).equals(val.raw)) {
+            response.type = key
+            return false
+          }
+        })
+        if (!response.type) {
+          showErrorDialog('incompatible file type') // throw error
+        }
+      }
+      setMedia(response)
+    })
+  }
   const handlePhotoSubmit = () => {
-    identity[photoType] = { photo: null }
-    store.set('identityPhotos')(identity)
+    identity[mediaType] = media
     screenProps.pop()
     screenProps.pop()
   }
@@ -56,28 +90,26 @@ const UploadPhoto = (props: UploadPhotoProps) => {
   return (
     <Wrapper>
       <Section style={styles.section}>
-        <Section.Row>
-          <View style={styles.innerUploadPhoto}>
-            <View style={styles.cropContainer}>
-              <CreateAvatar
-                height={cropSize}
-                lineWidth={2}
-                minCropRadius={15}
-                mobileScaleSpeed={0.01}
-                onClose={onClose}
-                onCrop={onChange}
-                shadingOpacity={0.8}
-                src={undefined}
-                width={cropSize}
-              />
+        {!media && (
+          <Section.Row>
+            <View style={styles.innerUploadPhoto}>
+              <View style={styles.cropContainer}>
+                <CustomButton onPress={chooseFile} disabled={false} color={theme.colors.darkBlue}>
+                  upload
+                </CustomButton>
+              </View>
             </View>
-          </View>
-        </Section.Row>
-        <Section.Stack justifyContent="flex-end" grow>
-          <CustomButton onPress={handlePhotoSubmit} disabled={false} color={theme.colors.darkBlue}>
-            Submit
-          </CustomButton>
-        </Section.Stack>
+          </Section.Row>
+        )}
+        {media && (
+          <Section.Stack justifyContent="flex-end" grow>
+            {mediaType == 'photo' && <Image style={{ width: 50, height: 50 }} source={{ uri: media.uri }} />}
+            {mediaType == 'video' && <Video style={{ width: 50, height: 50 }} source={{ uri: media.uri }} />}
+            <CustomButton onPress={handlePhotoSubmit} disabled={false} color={theme.colors.darkBlue}>
+              Submit
+            </CustomButton>
+          </Section.Stack>
+        )}
       </Section>
     </Wrapper>
   )

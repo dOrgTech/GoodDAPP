@@ -8,7 +8,7 @@ import SimpleStore from '../../../lib/undux/SimpleStore'
 import { CustomButton } from '../../common'
 
 // import { Section } from '../../common'
-// import logger from '../../../lib/logger/pino-logger'
+import logger from '../../../lib/logger/pino-logger'
 import WebcamGood from '../../../assets/zoom/webcam_good_ok.png'
 import WebcamBad from '../../../assets/zoom/webcam_bad_ok.png'
 import MobileAngleGood from '../../../assets/zoom/zoom-face-guy-angle-good-phone.png'
@@ -23,7 +23,7 @@ import LightingBad2 from '../../../assets/zoom/zoom-face-guy-lighting-side-web.p
 import LightingGood from '../../../assets/zoom/zoom-face-guy-lighting-good-web.png'
 import { Camera, getResponsiveVideoDimensions } from './Camera.web'
 
-// const log = logger.child({ from: 'MsrCapture' })
+const log = logger.child({ from: 'MsrCapture' })
 
 // TODO: Rami - what is type compared to class?
 //TODO: Rami - should I handle onEror and create a class instead of type?
@@ -114,48 +114,61 @@ const HelperWizard = props => {
  * 2. Triggers callback when captureResult is ready
  */
 class MsrCapture extends React.Component {
-  videoTrack: MediaStreamTrack
-
-  state = {
-    cameraReady: false,
+  constructor(props) {
+    super(props)
+    this.state = {
+      cameraReady: false,
+    }
+    this.captureUserMediaMsr = this.captureUserMediaMsr.bind(this)
+    log.debug('msrcapture')
   }
 
-  cameraReady = async (track: MediaStreamTrack) => {
-    console.log('camera ready')
-    this.videoTrack = track
+  videoStream: MediaStream
+
+  cameraReady = async (stream: MediaStream) => {
+    log.debug('camera ready')
+    this.videoStream = stream
     try {
-      // console.log('zoom initializes capture..')
+      // log.debug('zoom initializes capture..')
       // let zoomSDK = this.props.loadedZoom
       // this.zoom = new Zoom(zoomSDK)
       // await this.zoom.ready
       this.setState({ cameraReady: true }, () => this.props.store.set('loadingIndicator')({ loading: false }))
       if (this.props.showHelper === false) {
-        this.captureUserMediaMsr()
+        await this.captureUserMediaMsr()
       }
     } catch (e) {
-      console.log('Failed on capture, error:', e.message, e)
+      log.error('Failed on capture, error:', e.message, e)
       this.props.onError(e)
     }
   }
 
   captureUserMediaMsr = async () => {
+    log.debug('helper done')
     try {
-      var mediaRecorder = new MediaStreamRecorder(this.videoTrack)
+      var mediaRecorder = new MediaStreamRecorder(this.videoStream)
       mediaRecorder.mimeType = 'video/webm'
+      const onCaptureResult = this.props.onCaptureResult
+      const videoStream = this.videoStream
       mediaRecorder.ondataavailable = function(blob) {
         // POST/PUT "Blob" using FormData/XHR2
-        console.log('msr performs capture..')
-        this.props.onCaptureResult(blob)
+        log.debug('msr performs capture...')
+        onCaptureResult(blob)
+        videoStream.getTracks().forEach(track => {
+          track.stop()
+          track.enabled = false
+        })
       }
       mediaRecorder.start(3000)
     } catch (e) {
-      console.log('Failed on capture, error:', e.message, e)
+      log.debug('Failed on capture, error:', e.message, e)
       this.props.onError(e)
     }
   }
 
   componentDidMount() {
     this.props.store.set('loadingIndicator')({ loading: true })
+    log.debug('msr capture mounted')
   }
 
   componentWillUnmount() {
@@ -175,7 +188,7 @@ class MsrCapture extends React.Component {
               ) : null}
             </View>
             <div id="msr-interface-container" style={{ position: 'absolute' }} />
-            {<Camera key="camera" onCameraLoad={this.cameraReady} onError={this.props.onError} />}
+            {<Camera key="camera" stream onCameraLoad={this.cameraReady} onError={this.props.onError} />}
           </div>
         </View>
       </View>

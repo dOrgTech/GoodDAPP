@@ -3,26 +3,26 @@ import React, { createRef } from 'react'
 
 // import get from 'lodash/get'
 import type { DashboardProps } from '../Dashboard'
-// import logger from '../../../lib/logger/pino-logger'
-import { Wrapper } from '../../common'
+
+import logger from '../../../lib/logger/pino-logger'
+import { SaveButton, Section, Wrapper } from '../../common'
 
 // import { fireEvent } from '../../../lib/analytics/analytics'
-import userStorage from '../../../lib/gundb/UserStorage'
 
-// import { useScreenState } from '../../appNavigation/stackNavigation'
+import { useScreenState } from '../../appNavigation/stackNavigation'
+
 // import FRapi from './FaceRecognitionAPI'
 import Video from './Video'
 
 // import type FaceRecognitionResponse from './FaceRecognitionAPI'
-import GuidedFR from './GuidedFRProcessResults'
 import MsrCapture from './MsrCapture'
 
 // import { type ZoomCaptureResult } from './Zoom'
 // import zoomSdkLoader from './ZoomSdkLoader'
 
-// const log = logger.child({ from: 'FaceRecognition' })
+const log = logger.child({ from: 'FaceRecognition' })
 
-type FaceRecognitionProps = DashboardProps & {}
+type PhotoUploadProps = DashboardProps & {}
 
 type State = {
   showMsrCapture: boolean,
@@ -39,16 +39,13 @@ type State = {
 /**
  * Responsible to orchestrate FaceReco process, using the following modules: ZoomCapture & FRapi.
  * 1. Loads ZoomCapture and recieve ZoomCaptureResult - the user video capture result after processed locally by ZoomSDK (Handled by ZoomCapture)
- * 2. Uses FRapi which is responsible to communicate with GoodServer and UserStorage on FaceRecognition related actions, and handle sucess / failure
+ * 2. Uses FRapi which is responsible to communicate with GoodServer and UserStorage on PhotoUpload related actions, and handle sucess / failure
  * 3. Display relevant error messages
  * 4. Enables/Disables UI components as dependancy in the state of the process
  **/
-class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
+class PhotoUpload extends React.Component<PhotoUploadProps, State> {
   constructor(props) {
     super(props)
-
-    // this.screenState = useScreenState(this.screenProps)
-    // this.screenState.onDone = this.screenState.onDone
     this.state = {
       showPreText: false,
       showMsrCapture: true,
@@ -56,11 +53,17 @@ class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
       sessionId: undefined,
       loadingText: '',
       video: new Blob([], { type: 'video/webm' }),
-      videoUrl: String,
+      videoURL: undefined,
       mediaReady: false,
       captureResult: {},
       isWhitelisted: undefined,
+      showHelper: true,
     }
+    this.screenProps = props.screenProps
+    const [screenState] = useScreenState(this.screenProps)
+    this.screenState = screenState
+    this.screenState.onDone = this.screenState.onDone
+    this.onCaptureResult = this.onCaptureResult.bind(this)
   }
 
   loadedZoom: any
@@ -74,7 +77,7 @@ class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
   height = 0
 
   componentWillUnmount = () => {
-    console.log('Unloading ZoomSDK', this.loadedZoom)
+    log.debug('Unloading ZoomSDK', this.loadedZoom)
     this.timeout && clearTimeout(this.timeout)
   }
 
@@ -93,6 +96,7 @@ class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
         }, 0)),
       () => this.setState({ failure: true })
     )
+    log.debug('got media')
   }
 
   componentDidMount = () => {}
@@ -105,25 +109,29 @@ class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
       (this.containerRef && this.containerRef.current && this.containerRef.current.offsetWidth) || 300
     this.width = Math.min(this.width, containerWidth)
     this.height = window.innerHeight > window.innerWidth ? this.width * 1.77777778 : this.width * 0.5625
-    console.log({ containerWidth, width: this.width, height: this.height })
+    log.debug({ containerWidth, width: this.width, height: this.height })
   }
 
   onCaptureResult = (captureResult?: Blob): void => {
+    log.debug('captureresult')
+
     /* do things with image */
-    this.video = captureResult
-    this.videoURL = URL.createObjectURL(this.video)
+    const video = captureResult
+    const videoURL = URL.createObjectURL(video)
+    log.debug(videoURL)
+    this.setState({ videoURL, video })
   }
 
   // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
   //   try {
-  //     console.log('Sending capture result to server', captureResult)
+  //     log.debug('Sending capture result to server', captureResult)
   //     this.setState({
   //       showMsrCapture: false,
   //       showGuidedFR: true,
   //       sessionId: captureResult.sessionId,
   //     })
-  //     let result: FaceRecognitionResponse = await FRapi.performFaceRecognition(captureResult)
-  //     console.log('FR API:', { result })
+  //     let result: PhotoUploadResponse = await FRapi.performPhotoUpload(captureResult)
+  //     log.debug('FR API:', { result })
   //     if (!result || !result.ok) {
   //       log.warn('FR API call failed:', { result })
   //       this.showFRError(result.error) // TODO: rami
@@ -140,43 +148,38 @@ class FaceRecognition extends React.Component<FaceRecognitionProps, State> {
   //   }
   // }
 
-  done = () => {
-    // fireEvent('FR_Success')
-    this.props.screenProps.pop({ isValid: true })
+  done = video => {
+    this.onDone(video)
+    this.screenProps.pop()
   }
 
   render() {
-    const { showMsrCapture, showGuidedFR, sessionId, isAPISuccess } = this.state
+    const { showMsrCapture } = this.state
     return (
       <Wrapper>
-        {showGuidedFR && (
-          <GuidedFR
-            sessionId={sessionId}
-            userStorage={userStorage}
-            retry={this.retry}
-            done={this.done}
-            navigation={this.props.screenProps}
-            isAPISuccess={isAPISuccess}
-          />
-        )}
-        {this.videoUURL && <Video url={this.videoURL} />}
-        {this.state.mediaReady && showMsrCapture && !!this.videoURL && (
-          <MsrCapture
-            screenProps={this.props.screenProps}
-            onCaptureResult={this.onCaptureResult}
-            showMsrCapture={this.state.mediaReady && showMsrCapture}
-            loadedZoom={this.loadedZoom}
-            onError={this.showFRError}
-            showHelper={this.state.showHelper}
-          />
-        )}
+        <Section grow>
+          {this.state.videoURL && <Video loop url={this.state.videoURL} />}
+          {!this.state.videoURL && (
+            <MsrCapture
+              screenProps={this.props.screenProps}
+              onCaptureResult={this.onCaptureResult}
+              showMsrCapture={this.state.mediaReady && showMsrCapture}
+              loadedZoom={this.loadedZoom}
+              onError={this.showFRError}
+              showHelper={this.state.showHelper}
+            />
+          )}
+          <Section.Row>
+            <SaveButton onPress={() => this.done(this.state.video)} />
+          </Section.Row>
+        </Section>
       </Wrapper>
     )
   }
 }
 
-FaceRecognition.navigationOptions = {
+PhotoUpload.navigationOptions = {
   title: 'Face Verification',
   navigationBarHidden: false,
 }
-export default FaceRecognition
+export default PhotoUpload
