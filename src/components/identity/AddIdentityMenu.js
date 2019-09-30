@@ -9,10 +9,6 @@ import { displayNames } from './identities'
 
 const TITLE = 'Add Identity'
 
-// function filterObject(obj) {
-//   return pickBy(obj, (v, k) => v !== undefined && v !== '')
-// }
-
 const arrayDiff = (a, b) => {
   return a.filter(x => !b.includes(x))
 }
