@@ -3,8 +3,10 @@ import React from 'react'
 // import { useScreenState } from '../appNavigation/stackNavigation'
 import { getResponsiveVideoDimensions } from './Camera.web'
 
-export default ({ url }) => {
+export default ({ url, loop }) => {
   // const [screenState] = useScreenState(screenProps)
+  console.log('videoo')
+
   // const { url } = screenState
   const styles = {
     videoElement: {
@@ -25,7 +27,7 @@ export default ({ url }) => {
   return (
     <>
       <div style={styles.videoContainer}>
-        <video id="msr-video-element" autoPlay playsInline src={url} style={styles.videoElement} />
+        <video id="msr-video-element" autoPlay playsInline src={url} loop={loop} style={styles.videoElement} />
       </div>
     </>
   )
