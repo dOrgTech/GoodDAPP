@@ -13,6 +13,8 @@ import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-c
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { displayNames } from './identities'
 
+// import {SaveButton} from '../common/buttons'
+
 const TITLE = 'Add Identity'
 
 const arrayDiff = (a, b) => {
@@ -119,12 +121,13 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   return (
     <Wrapper>
-      <Section grow style={styles.Section}>
+      <Section style={styles.Section}>
         <Section.Stack>
           <FlatList
             data={Object.keys(identityForm.$.socialPosts.$)}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            style={styles.spacer}
           />
           <IdentityView
             theme={theme}
@@ -132,9 +135,8 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             style={styles.borderedBottomStyle}
             onPress={() => screenProps.push('UploadPhoto', { from: 'AddIdentityMenu',  })}
           />
-          {/*
-          {!profile.photo && (
-            <TouchableOpacity onPress={handleVerifyPhoto}>
+
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
@@ -143,9 +145,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
                 value={"Verify you're a human through a personal photo"}
               />
             </TouchableOpacity>
-          )}
-          {!profile.photoId && (
-            <TouchableOpacity onPress={handleVerifyPhotoId}>
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
@@ -154,8 +154,6 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
                 value={'Verify your photo ID'}
               />
             </TouchableOpacity>
-          )}
-          */}
           <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
         </Section.Stack>
       </Section>
@@ -172,6 +170,7 @@ const getStylesFromProps = ({ theme }) => {
     borderedBottomStyle: {
       borderBottomColor: theme.colors.lightGray,
       borderBottomWidth: 1,
+      marginBottom: 8,
     },
     suffixIcon: {
       alignItems: 'center',
@@ -187,6 +186,10 @@ const getStylesFromProps = ({ theme }) => {
     errorMargin: {
       marginTop: theme.sizes.default,
       marginBottom: theme.sizes.default,
+    },
+    spacer: {
+      // marginTop: 10,
+      // marginBottom: 10,
     },
   }
 }

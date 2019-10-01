@@ -38,18 +38,20 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section grow style={styles.section}>
         <Section.Row style={styles.row}>
-          <Text>
-            Please make a {displayNames[name]} {postNames[name]} with the following (tap the clipboard to copy, or press
-            share if you{"'"}re on mobile):
+          <Text style={styles.instruction}>
+            Please make a {displayNames[name]} {postNames[name]} with the text below {'\n'} (tap the clipboard to copy,
+            or press share if you{"'"}re on mobile):
           </Text>
         </Section.Row>
         <Section.Row style={styles.row}>
           <TouchableOpacity
+            style={styles.clipboardTouch}
             onPress={async () => {
               await Clipboard.setString(verifyText)
             }}
           >
             <InputRounded
+              style={styles.clipboard}
               disabled={true}
               icon="paste"
               iconColor={theme.colors.primary}
@@ -59,7 +61,7 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
           </TouchableOpacity>
         </Section.Row>
 
-        <Section.Row style={styles.row}>
+        <Section.Row style={styles.row} justifyContent="flex-end">
           <ShareButton name={name} style={styles.button} />
         </Section.Row>
 
@@ -71,7 +73,7 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
             iconColor={theme.colors.primary}
             iconSize={20}
             onChange={onChange}
-            placeholder="Copy link to post here"
+            placeholder="Paste link to post here"
             value={post}
           />
         </Section.Row>
@@ -90,8 +92,21 @@ GenericSocial.navigationOptions = {
 const getStylesFromProps = ({ theme }) => ({
   section: {},
 
+  clipboard: {
+    flex: 1,
+  },
+
+  clipboardTouch: {
+    flex: 1,
+  },
+
+  instruction: {
+    textAlign: 'center',
+  },
+
   row: {
     marginBottom: 15,
+    marginTop: 15,
   },
 
   iconRight: {},
