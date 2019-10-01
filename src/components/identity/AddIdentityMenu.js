@@ -7,6 +7,8 @@ import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import { displayNames } from './identities'
 
+// import {SaveButton} from '../common/buttons'
+
 const TITLE = 'Add Identity'
 
 const arrayDiff = (a, b) => {
@@ -58,15 +60,16 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   return (
     <Wrapper>
-      <Section grow style={styles.Section}>
+      <Section style={styles.Section}>
         <Section.Stack>
           <FlatList
             data={arrayDiff(Object.keys(displayNames), Object.keys(storedIdentity))}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            style={styles.spacer}
           />
           {!identityPhotos.humanPhoto && (
-            <TouchableOpacity onPress={handleVerifyPhoto}>
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
@@ -77,7 +80,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             </TouchableOpacity>
           )}
           {!identityPhotos.photoId && (
-            <TouchableOpacity onPress={handleVerifyPhotoId}>
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
@@ -102,6 +105,7 @@ const getStylesFromProps = ({ theme }) => {
     borderedBottomStyle: {
       borderBottomColor: theme.colors.lightGray,
       borderBottomWidth: 1,
+      marginBottom: 8,
     },
     suffixIcon: {
       alignItems: 'center',
@@ -117,6 +121,10 @@ const getStylesFromProps = ({ theme }) => {
     errorMargin: {
       marginTop: theme.sizes.default,
       marginBottom: theme.sizes.default,
+    },
+    spacer: {
+      // marginTop: 10,
+      // marginBottom: 10,
     },
   }
 }
