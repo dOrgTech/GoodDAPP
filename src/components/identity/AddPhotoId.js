@@ -57,7 +57,7 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
             onPress={saveAvatar}
             color={theme.colors.darkGray}
           >
-            Upload a picture of your Photo ID so we can verify your account.
+            Upload a selfie so we can verify your account.
           </Text>
         </Section.Row>
         <Section.Row>

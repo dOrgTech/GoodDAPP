@@ -10,8 +10,9 @@ import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
 import { useScreenState } from '../appNavigation/stackNavigation'
-import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-client'
+import { IdentityDefinitionForm, serialize } from '../../../node_modules/@dorgtech/id-dao-client'
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
+
 import { displayNames } from './identities'
 
 // import {SaveButton} from '../common/buttons'
@@ -35,23 +36,24 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
   const store = GDStore.useStore()
-  const storedIdentity = store.get('identity')
+  const profile = store.get('profile')
   const [showErrorDialog] = useErrorDialog()
-  const identityForm = _.hasIn(screenState, 'identity.form') ? screenState.identity.form : new IdentityDefinitionForm()
-  const identity = { ...storedIdentity }
-  Object.assign(identity)
+  const identityForm = _.hasIn(screenState, 'identityForm') ? screenState.identityForm : new IdentityDefinitionForm()
 
-  if (_.hasIn(screenState, 'identity.form')) {
-    if (storedIdentity.json) {
-      identityForm.$.data = storedIdentity.json
-    }
-  }
-  if (_.hasIn(screenState, 'identity.videoHash')) {
-    Object.assign(storedIdentity, { videoHash: screenState.identity.videoHash })
-  }
-  if (_.hasIn(screenState, 'identity.photoHash')) {
-    Object.assign(storedIdentity, { photo: screenState.identity.photoHash })
-  }
+  // const identity = { ...storedIdentity }
+  // Object.assign(identity)
+
+  // if (_.hasIn(screenState, 'identity.form')) {
+  //   if (storedIdentity.json) {
+  //     identityForm.$.data = storedIdentity.json
+  //   }
+  // }
+  // if (_.hasIn(screenState, 'identity.videoHash')) {
+  //   Object.assign(storedIdentity, { videoHash: screenState.identity.videoHash })
+  // }
+  // if (_.hasIn(screenState, 'identity.photoHash')) {
+  //   Object.assign(storedIdentity, { photo: screenState.identity.photoHash })
+  // }
 
   //const [socialPosts, setSocialPosts] = useState({})
 
@@ -88,16 +90,19 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   const keyExtractor = (item, index) => item
 
-  // const handleVerifyPhoto = () => {
-  //   screenProps.push('AddHumanVerification')
-  // }
-  // const handleVerifyPhotoId = () => {
-  //   screenProps.push('AddPhotoId')
-  // }
+  const handleVerifyPhoto = () => {
+    screenProps.push('TakeVideo', { from: 'AddIdentityMenu', identityForm })
+  }
+
+  const handleVerifyPhotoId = () => {
+    screenProps.push('AddPhotoId', { from: 'AddIdentityMenu' })
+  }
 
   const handleSave = async () => {
     //const res = identity.validate()
-    const res = await identityForm.$.socialPosts.validate
+    identityForm.$.name.value = profile.fullName
+    identityForm.$.address.value = profile.walletAddress
+    const res = await identityForm.validate()
     if (res.hasError) {
       showErrorDialog(
         _.transform(identityForm.$.socialPosts.$, (acc, val, key) => {
@@ -107,15 +112,8 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
         })
       )
     } else {
-      store.set('identity')({ ...identity })
-      let formdata = new FormData()
-
-      formdata.append('product[name]', 'test')
-      formdata.append('product[price]', 10)
-      formdata.append('product[category_ids][]', 2)
-      formdata.append('product[description]', '12dsadadsa')
-      formdata.append('product[images_attributes[0][file]]', { uri: identity.photo, name: 'photo', type: 'image/jpeg' })
-      API.proposeId({ ...identity })
+      const data = identityForm.data
+      API.proposeId(serialize(data))
     }
   }
   return (
@@ -134,29 +132,24 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             renderItem={renderItem}
             style={styles.spacer}
           />
-
-          {!identityPhotos.humanPhoto && (
-            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
-              <InputRounded
-                disabled={true}
-                icon={'send'}
-                iconColor={theme.colors.primary}
-                iconSize={28}
-                value={'Verify with Selfie'}
-              />
-            </TouchableOpacity>
-          )}
-          {!identityPhotos.photoId && (
-            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
-              <InputRounded
-                disabled={true}
-                icon={'send'}
-                iconColor={theme.colors.primary}
-                iconSize={28}
-                value={'Verify your photo ID'}
-              />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
+            <InputRounded
+              disabled={true}
+              icon={'send'}
+              iconColor={theme.colors.primary}
+              iconSize={28}
+              value={'Verify with video'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
+            <InputRounded
+              disabled={true}
+              icon={'send'}
+              iconColor={theme.colors.primary}
+              iconSize={28}
+              value={'Verify your selfie'}
+            />
+          </TouchableOpacity>
           <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
         </Section.Stack>
         <Section.Row style={styles.topMargin}>

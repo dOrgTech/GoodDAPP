@@ -14,7 +14,7 @@ const TITLE = 'Add Identity'
 const GenericSocial = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
 
-  const { name, identity } = screenState
+  const { name, identityForm: identity } = screenState
   const field = identity.$.socialPosts.$[name]
   const [error, setError] = useState()
   const [post, setPost] = useState()
