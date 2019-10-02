@@ -4,7 +4,8 @@ import { FlatList, TouchableOpacity } from 'react-native'
 
 import _ from 'lodash'
 import { withStyles } from '../../lib/styles'
-import { SaveButton, Section, Wrapper } from '../common'
+
+import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
@@ -13,11 +14,9 @@ import { IdentityDefinitionForm } from '../../../node_modules/@dorgtech/id-dao-c
 import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { displayNames } from './identities'
 
-const TITLE = 'Add Identity'
+// import {SaveButton} from '../common/buttons'
 
-// function filterObject(obj) {
-//   return pickBy(obj, (v, k) => v !== undefined && v !== '')
-// }
+const TITLE = 'Add Identity'
 
 const IdentityView = ({ id, onPress, style, theme }) => (
   <TouchableOpacity onPress={onPress}>
@@ -121,39 +120,34 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   }
   return (
     <Wrapper>
-      <Section grow style={styles.Section}>
+      <Section style={styles.Section}>
+        <Section.Row>
+          <Text style={styles.introText}>
+            Please add as many forms of identity verification as per your comfort level. {'\n\n'}The more forms of
+            verification, the more likely your profile will be accepted into the Identity Registry.
+          </Text>
+        </Section.Row>
         <Section.Stack>
           <FlatList
             data={Object.keys(identityForm.$.socialPosts.$)}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
+            style={styles.spacer}
           />
-          <IdentityView
-            theme={theme}
-            id={'photo'}
-            style={styles.borderedBottomStyle}
-            onPress={() => screenProps.push('TakePhoto', { from: 'AddIdentityMenu', identityForm })}
-          />
-          <IdentityView
-            theme={theme}
-            id={'video'}
-            style={styles.borderedBottomStyle}
-            onPress={() => screenProps.push('TakeVideo', { from: 'AddIdentityMenu', identityForm })}
-          />
-          {/*
-          {!profile.photo && (
-            <TouchableOpacity onPress={handleVerifyPhoto}>
+
+          {!identityPhotos.humanPhoto && (
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
                 iconColor={theme.colors.primary}
                 iconSize={28}
-                value={"Verify you're a human through a personal photo"}
+                value={'Verify with Selfie'}
               />
             </TouchableOpacity>
           )}
-          {!profile.photoId && (
-            <TouchableOpacity onPress={handleVerifyPhotoId}>
+          {!identityPhotos.photoId && (
+            <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
               <InputRounded
                 disabled={true}
                 icon={'send'}
@@ -163,9 +157,11 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
               />
             </TouchableOpacity>
           )}
-          */}
           <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
         </Section.Stack>
+        <Section.Row style={styles.topMargin}>
+          <SaveButton onPress={() => screenProps.pop()} text="Submit Your Identity" />
+        </Section.Row>
       </Section>
     </Wrapper>
   )
@@ -180,6 +176,7 @@ const getStylesFromProps = ({ theme }) => {
     borderedBottomStyle: {
       borderBottomColor: theme.colors.lightGray,
       borderBottomWidth: 1,
+      marginBottom: 8,
     },
     suffixIcon: {
       alignItems: 'center',
@@ -192,9 +189,19 @@ const getStylesFromProps = ({ theme }) => {
       width: 32,
       zIndex: 1,
     },
+    introText: {
+      textAlign: 'left',
+      marginBottom: 20,
+      marginLeft: 20,
+      marginRight: 20,
+      marginTop: 10,
+    },
     errorMargin: {
       marginTop: theme.sizes.default,
       marginBottom: theme.sizes.default,
+    },
+    topMargin: {
+      marginTop: 10,
     },
   }
 }
