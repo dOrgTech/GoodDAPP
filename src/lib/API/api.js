@@ -131,11 +131,9 @@ class API {
     return this.client.post('/user/upload-content', { req })
   }
 
-  uploadJson(identityJson): AxiosPromise<any> {
-    let req = new FormData()
-    req.append('content', JSON.stringify(identityJson))
-    log.debug({ req })
-    return this.client.post('/user/upload-content', { req }).then(r => r.data.contentHash)
+  proposeAdd(serializedIdJson): AxiosPromise<any> {
+    log.debug({ serializedIdJson })
+    return this.client.post('/id-dao/propose-add', { json: serializedIdJson })
   }
 
   /**
