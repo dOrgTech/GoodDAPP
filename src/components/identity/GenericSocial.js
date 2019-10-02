@@ -36,11 +36,11 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
 
   return (
     <Wrapper>
-      <Section grow style={styles.section}>
-        <Section.Row style={styles.row}>
+      <Section style={styles.section}>
+        <Section.Row>
           <Text style={styles.instruction}>
-            Please make a {displayNames[name]} {postNames[name]} with the text below {'\n'} (tap the clipboard to copy,
-            or press share if you{"'"}re on mobile):
+            Please make a {displayNames[name]} {postNames[name]} with the text below. Tap the clipboard to copy, or
+            press share if you are using a mobile phone:
           </Text>
         </Section.Row>
         <Section.Row style={styles.row}>
@@ -92,21 +92,28 @@ GenericSocial.navigationOptions = {
 const getStylesFromProps = ({ theme }) => ({
   section: {},
 
-  clipboard: {
-    flex: 1,
-  },
+  clipboard: {},
 
   clipboardTouch: {
     flex: 1,
+    borderBottomColor: theme.colors.lightGray,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: theme.colors.lightGray,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
 
   instruction: {
-    textAlign: 'center',
+    textAlign: 'left',
+    marginBottom: 20,
+    marginLeft: 20,
+    marginRight: 20,
+    marginTop: 10,
   },
 
   row: {
-    marginBottom: 15,
-    marginTop: 15,
+    marginBottom: 20,
   },
 
   iconRight: {},

@@ -4,7 +4,7 @@ import { FlatList, TouchableOpacity } from 'react-native'
 
 import _ from 'lodash'
 import { withStyles } from '../../lib/styles'
-import { SaveButton, Section, Wrapper } from '../common'
+import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
@@ -122,6 +122,12 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   return (
     <Wrapper>
       <Section style={styles.Section}>
+        <Section.Row>
+          <Text style={styles.introText}>
+            Please add as many forms of identity verification as per your comfort level. {'\n\n'}The more forms of
+            verification, the more likely your profile will be accepted into the Identity Registry.
+          </Text>
+        </Section.Row>
         <Section.Stack>
           <FlatList
             data={Object.keys(identityForm.$.socialPosts.$)}
@@ -156,6 +162,9 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             </TouchableOpacity>
           <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
         </Section.Stack>
+        <Section.Row style={styles.topMargin}>
+          <SaveButton onPress={() => screenProps.pop()} text="Submit Your Identity" />
+        </Section.Row>
       </Section>
     </Wrapper>
   )
@@ -183,12 +192,20 @@ const getStylesFromProps = ({ theme }) => {
       width: 32,
       zIndex: 1,
     },
+    introText: {
+      textAlign: 'left',
+      marginBottom: 20,
+      marginLeft: 20,
+      marginRight: 20,
+      marginTop: 10,
+    },
     errorMargin: {
       marginTop: theme.sizes.default,
       marginBottom: theme.sizes.default,
     },
-    spacer: {
-      // marginTop: 10,
+    topMargin: {
+      marginTop: 10,
+
       // marginBottom: 10,
     },
   }

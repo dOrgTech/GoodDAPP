@@ -10,7 +10,6 @@ import { withStyles } from '../../lib/styles'
 const TITLE = 'Add Identity'
 
 const AddIdentity = ({ screenProps, theme, styles }) => {
-
   const [screenState] = useScreenState(screenProps)
 
   const { name } = screenState
