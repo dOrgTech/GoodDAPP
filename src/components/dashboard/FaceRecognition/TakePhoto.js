@@ -1,8 +1,9 @@
 // @flow
-import React, { useState } from 'react'
+import React, { createRef, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
 import { Text } from 'react-native-paper'
 import { isMobile } from 'mobile-device-detect'
+import MediaStreamRecorder from 'msr'
 import SimpleStore from '../../../lib/undux/SimpleStore'
 import { CustomButton } from '../../common'
 
@@ -20,22 +21,12 @@ import WebAngleGood from '../../../assets/zoom/zoom-face-guy-angle-good-web.png'
 import LightingBad1 from '../../../assets/zoom/zoom-face-guy-lighting-back-web.png'
 import LightingBad2 from '../../../assets/zoom/zoom-face-guy-lighting-side-web.png'
 import LightingGood from '../../../assets/zoom/zoom-face-guy-lighting-good-web.png'
-
 import { Camera, getResponsiveVideoDimensions } from './Camera.web'
-import Zoom, { type ZoomCaptureResult } from './Zoom'
 
-const log = logger.child({ from: 'ZoomCapture' })
+const log = logger.child({ from: 'MsrCapture' })
 
 // TODO: Rami - what is type compared to class?
 //TODO: Rami - should I handle onEror and create a class instead of type?
-
-type ZoomCaptureProps = {
-  screenProps: any,
-  loadedZoom: boolean,
-  onCaptureResult: (captureResult?: ZoomCaptureResult) => void,
-  onError: (error: string) => void,
-  showHelper: boolean,
-}
 
 const HelperWizard = props => {
   const { done, skip } = props
@@ -52,9 +43,9 @@ const HelperWizard = props => {
       } else {
         text = 'Center your webcam'
         imgs = (
-          <View style={styles.imageViewWebCam}>
-            <Image source={WebcamBad} resizeMode={'contain'} style={styles.webcamImage} />
-            <Image source={WebcamGood} resizeMode={'contain'} style={styles.webcamImage} />
+          <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Image source={WebcamBad} resizeMode={'contain'} style={{ margin: 15, width: '100%', height: 120 }} />
+            <Image source={WebcamGood} resizeMode={'contain'} style={{ margin: 15, width: '100%', height: 120 }} />
           </View>
         )
       }
@@ -63,15 +54,15 @@ const HelperWizard = props => {
       text = 'Ensure camera is at eye level'
       if (isMobile) {
         imgs = (
-          <View style={styles.imageView}>
-            <Image source={MobileAngleGood} resizeMode={'contain'} style={styles.mobileAngleImage} />
+          <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <Image source={MobileAngleGood} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
             {/* <Image source={MobileAngleBad} resizeMode={'contain'} style={{ width: '100%', height: 75 }} /> */}
           </View>
         )
       } else {
         imgs = (
-          <View style={styles.imageView}>
-            <Image source={WebAngleGood} resizeMode={'contain'} style={styles.mobileAngleImage} />
+          <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <Image source={WebAngleGood} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
             {/* <Image source={WebAngleOk} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
             <Image source={WebAngleBad} resizeMode={'contain'} style={{ width: '100%', height: 75 }} /> */}
           </View>
@@ -81,10 +72,10 @@ const HelperWizard = props => {
     case 2:
       text = 'Light your face evenly'
       imgs = (
-        <View style={styles.imageView}>
-          <Image source={LightingBad2} resizeMode={'contain'} style={styles.loghtingBadImage} />
-          <Image source={LightingBad1} resizeMode={'contain'} style={styles.loghtingBadImage} />
-          <Image source={LightingGood} resizeMode={'contain'} style={styles.loghtingBadImage} />
+        <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Image source={LightingBad2} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
+          <Image source={LightingBad1} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
+          <Image source={LightingGood} resizeMode={'contain'} style={{ width: '100%', height: 75 }} />
         </View>
       )
       break
@@ -122,26 +113,31 @@ const HelperWizard = props => {
  * 1. Calls zoom.capture() on the camera capture (Recieved from Camera component)
  * 2. Triggers callback when captureResult is ready
  */
-class ZoomCapture extends React.Component<ZoomCaptureProps> {
-  videoTrack: MediaStreamTrack
-
-  zoom: Zoom
-
-  state = {
-    cameraReady: false,
+class MsrCapture extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      cameraReady: false,
+    }
+    this.captureUserMediaMsr = this.captureUserMediaMsr.bind(this)
+    log.debug('msrcapture')
+    this.image = createRef(HTMLImageElement)
+    this.canvas = createRef(HTMLCanvasElement)
   }
 
-  cameraReady = async (track: MediaStreamTrack) => {
+  videoStream: MediaStream
+
+  cameraReady = async (stream: MediaStream) => {
     log.debug('camera ready')
-    this.videoTrack = track
+    this.videoStream = stream
     try {
-      log.debug('zoom initializes capture..')
-      let zoomSDK = this.props.loadedZoom
-      this.zoom = new Zoom(zoomSDK)
-      await this.zoom.ready
+      // log.debug('zoom initializes capture..')
+      // let zoomSDK = this.props.loadedZoom
+      // this.zoom = new Zoom(zoomSDK)
+      // await this.zoom.ready
       this.setState({ cameraReady: true }, () => this.props.store.set('loadingIndicator')({ loading: false }))
       if (this.props.showHelper === false) {
-        this.captureUserMediaZoom()
+        await this.captureUserMediaMsr()
       }
     } catch (e) {
       log.error('Failed on capture, error:', e.message, e)
@@ -149,36 +145,37 @@ class ZoomCapture extends React.Component<ZoomCaptureProps> {
     }
   }
 
-  captureUserMediaZoom = async () => {
-    let captureOutcome: ZoomCaptureResult
+  captureUserMediaMsr = async () => {
+    log.debug('helper done')
     try {
-      log.debug('zoom performs capture..')
-      await this.zoom.ready
-      captureOutcome = await this.zoom.capture(this.videoTrack) // TODO: handle capture errors.
-      log.info({ captureOutcome })
-      if (captureOutcome) {
-        this.props.onCaptureResult(captureOutcome)
+      var mediaRecorder = new MediaStreamRecorder(this.videoStream)
+      mediaRecorder.mimeType = 'video/webm'
+      const onCaptureResult = this.props.onCaptureResult
+      const videoStream = this.videoStream
+      mediaRecorder.ondataavailable = function(blob) {
+        // POST/PUT "Blob" using FormData/XHR2
+        log.debug('msr performs capture...')
+        onCaptureResult(blob)
+        videoStream.getTracks().forEach(track => {
+          track.stop()
+          track.enabled = false
+        })
       }
+      mediaRecorder.start(3000)
     } catch (e) {
-      log.error('Failed on capture, error:', e.message, e)
+      log.debug('Failed on capture, error:', e.message, e)
       this.props.onError(e)
     }
   }
 
   componentDidMount() {
     this.props.store.set('loadingIndicator')({ loading: true })
-    if (!this.props.loadedZoom) {
-      log.warn('zoomSDK was not loaded into ZoomCapture properly')
-    }
+    log.debug('msr capture mounted')
   }
 
   componentWillUnmount() {
     if (this.state.cameraReady === false) {
       this.props.store.set('loadingIndicator')({ loading: false })
-    }
-    if (this.props.loadedZoom) {
-      log.warn('zoomSDK was loaded, canceling zoom capture')
-      this.zoom && this.zoom.cancel()
     }
   }
 
@@ -186,14 +183,14 @@ class ZoomCapture extends React.Component<ZoomCaptureProps> {
     return (
       <View>
         <View style={styles.bottomSection}>
-          <div id="zoom-parent-container" style={getVideoContainerStyles()}>
+          <div id="msr-parent-container" style={getVideoContainerStyles()}>
             <View id="helper" style={styles.helper}>
               {this.state.cameraReady ? (
-                <HelperWizard done={this.captureUserMediaZoom} skip={this.props.showHelper === false} />
+                <HelperWizard done={this.captureUserMediaMsr} skip={this.props.showHelper === false} />
               ) : null}
             </View>
-            <div id="zoom-interface-container" style={{ position: 'absolute' }} />
-            {<Camera key="camera" track onCameraLoad={this.cameraReady} onError={this.props.onError} />}
+            <div id="msr-interface-container" style={{ position: 'absolute' }} />
+            {<Camera key="camera" stream onCameraLoad={this.cameraReady} onError={this.props.onError} />}
           </div>
         </View>
       </View>
@@ -202,31 +199,6 @@ class ZoomCapture extends React.Component<ZoomCaptureProps> {
 }
 
 const styles = StyleSheet.create({
-  imageViewWebCam: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  imageView: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webcamImage: {
-    margin: '0.9rem',
-    width: '100%',
-    height: '7.5rem',
-  },
-  loghtingBadImage: {
-    width: '100%',
-    height: '4.6875rem',
-  },
-  mobileAngleImage: {
-    width: '100%',
-    height: '4.6875rem',
-  },
   bottomSection: {
     flex: 1,
     backgroundColor: '#fff',
@@ -272,4 +244,4 @@ const getVideoContainerStyles = () => ({
   marginBottom: 0,
 })
 
-export default SimpleStore.withStore(ZoomCapture)
+export default SimpleStore.withStore(MsrCapture)

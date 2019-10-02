@@ -22,7 +22,7 @@ import MsrCapture from './MsrCapture'
 
 const log = logger.child({ from: 'FaceRecognition' })
 
-type PhotoUploadProps = DashboardProps & {}
+type TakeVideoProps = DashboardProps & {}
 
 type State = {
   showMsrCapture: boolean,
@@ -43,7 +43,7 @@ type State = {
  * 3. Display relevant error messages
  * 4. Enables/Disables UI components as dependancy in the state of the process
  **/
-class PhotoUpload extends React.Component<PhotoUploadProps, State> {
+class TakeVideo extends React.Component<TakeVideoProps, State> {
   constructor(props) {
     super(props)
     this.state = {
@@ -64,8 +64,6 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
     this.screenState = screenState
     this.screenState.onDone = this.screenState.onDone
     this.onCaptureResult = this.onCaptureResult.bind(this)
-    this.image = createRef(HTMLImageElement)
-    this.canvas = createRef(HTMLCanvasElement)
   }
 
   loadedZoom: any
@@ -114,11 +112,14 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
     log.debug({ containerWidth, width: this.width, height: this.height })
   }
 
-  onCaptureResult = (): void => {
+  onCaptureResult = (captureResult?: Blob): void => {
     log.debug('captureresult')
-    const photo = this.canvas.current.toDataURL('image/png')
-    this.image.current.setAttribute('src', photo)
-    this.setState({ photo })
+
+    /* do things with image */
+    const video = captureResult
+    const videoURL = URL.createObjectURL(video)
+    log.debug(videoURL)
+    this.setState({ videoURL, video })
   }
 
   // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
@@ -147,8 +148,8 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
   //   }
   // }
 
-  done = photo => {
-    this.onDone(photo)
+  done = video => {
+    this.onDone(video)
     this.screenProps.pop()
   }
 
@@ -159,28 +160,25 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
         <Section grow>
           {this.state.videoURL && <Video loop url={this.state.videoURL} />}
           {!this.state.videoURL && (
-            <canvas ref={this.canvas}>
-              <MsrCapture
-                screenProps={this.props.screenProps}
-                onCaptureResult={this.onCaptureResult}
-                showMsrCapture={this.state.mediaReady && showMsrCapture}
-                loadedZoom={this.loadedZoom}
-                onError={this.showFRError}
-                showHelper={this.state.showHelper}
-              />
-            </canvas>
+            <MsrCapture
+              screenProps={this.props.screenProps}
+              onCaptureResult={this.onCaptureResult}
+              showMsrCapture={this.state.mediaReady && showMsrCapture}
+              loadedZoom={this.loadedZoom}
+              onError={this.showFRError}
+              showHelper={this.state.showHelper}
+            />
           )}
           <Section.Row>
-            <SaveButton onPress={() => this.done(this.state.photo)} />
+            <SaveButton onPress={() => this.done(this.state.video)} />
           </Section.Row>
         </Section>
       </Wrapper>
     )
   }
 }
-
-PhotoUpload.navigationOptions = {
-  title: 'Face Verification',
+TakeVideo.navigationOptions = {
+  title: 'Take Video',
   navigationBarHidden: false,
 }
-export default PhotoUpload
+export default TakeVideo

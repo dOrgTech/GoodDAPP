@@ -11,7 +11,10 @@ import GenericSocial from '../identity/GenericSocial'
 import AddHumanVerification from '../identity/AddHumanVerification'
 import AddPhotoId from '../identity/AddPhotoId'
 import FaceRecognition from '../dashboard/FaceRecognition/FaceRecognition'
-import UploadPhoto from '../dashboard/FaceRecognition/PhotoUpload.web'
+import TakePhoto from '../dashboard/FaceRecognition/TakePhoto'
+
+// import UploadPhoto from '../identity/UploadPhoto'
+import TakeVideo from '../dashboard/FaceRecognition/TakeVideo.web'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -98,6 +101,9 @@ export default createStackNavigator({
   GenericSocial,
   FaceRecognition,
   AddHumanVerification,
-  UploadPhoto,
+
+  // UploadPhoto,
   AddPhotoId,
+  TakePhoto,
+  TakeVideo,
 })
