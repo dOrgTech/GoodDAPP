@@ -49,11 +49,11 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       identityForm.$.data = storedIdentity.json
     }
   }
-  if (_.hasIn(screenState, 'identity.video')) {
-    Object.assign(...storedIdentity, { video: screenState.identity.video })
+  if (_.hasIn(screenState, 'identity.videoHash')) {
+    Object.assign(storedIdentity, { videoHash: screenState.identity.videoHash })
   }
-  if (_.hasIn(screenState, 'identity.photo')) {
-    Object.assign(...storedIdentity, { photo: screenState.identity.photo })
+  if (_.hasIn(screenState, 'identity.photoHash')) {
+    Object.assign(storedIdentity, { photo: screenState.identity.photoHash })
   }
 
   //const [socialPosts, setSocialPosts] = useState({})
@@ -121,7 +121,6 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       API.proposeId({ ...identity })
     }
   }
-
   return (
     <Wrapper>
       <Section style={styles.Section}>
@@ -142,19 +141,13 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             theme={theme}
             id={'photo'}
             style={styles.borderedBottomStyle}
-            onPress={() => screenProps.push('TakePhoto', { from: 'AddIdentityMenu' })}
+            onPress={() => screenProps.push('TakePhoto', { from: 'AddIdentityMenu', identityForm })}
           />
           <IdentityView
             theme={theme}
             id={'video'}
             style={styles.borderedBottomStyle}
-            onPress={() => {
-              try {
-                screenProps.push('TakeVideo', { from: 'AddIdentityMenu', onDone: () => null })
-              } catch (e) {
-                console.log(e)
-              }
-            }}
+            onPress={() => screenProps.push('TakeVideo', { from: 'AddIdentityMenu', identityForm })}
           />
 
             <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>

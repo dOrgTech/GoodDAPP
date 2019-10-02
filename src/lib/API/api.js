@@ -124,8 +124,18 @@ class API {
    * `/user/add` post api call
    * @param {UserRecord} user
    */
-  proposeId(user: UserRecord): AxiosPromise<any> {
-    return this.client.post('/user/proposeid', { user })
+  uploadContent(content: Blob): AxiosPromise<any> {
+    let req = new FormData()
+    req.append('content', content)
+    log.debug({ req })
+    return this.client.post('/user/upload-content', { req })
+  }
+
+  uploadJson(identityJson): AxiosPromise<any> {
+    let req = new FormData()
+    req.append('content', JSON.stringify(identityJson))
+    log.debug({ req })
+    return this.client.post('/user/upload-content', { req }).then(r => r.data.contentHash)
   }
 
   /**

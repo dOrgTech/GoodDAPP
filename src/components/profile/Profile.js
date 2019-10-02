@@ -11,7 +11,7 @@ import GenericSocial from '../identity/GenericSocial'
 import AddHumanVerification from '../identity/AddHumanVerification'
 import AddPhotoId from '../identity/AddPhotoId'
 import FaceRecognition from '../dashboard/FaceRecognition/FaceRecognition'
-import TakePhoto from '../dashboard/FaceRecognition/TakePhoto'
+import TakePhoto from '../dashboard/FaceRecognition/TakePhoto.web'
 
 // import UploadPhoto from '../identity/UploadPhoto'
 import TakeVideo from '../dashboard/FaceRecognition/TakeVideo.web'
