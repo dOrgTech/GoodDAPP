@@ -81,7 +81,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
                 icon={'send'}
                 iconColor={theme.colors.primary}
                 iconSize={28}
-                value={"Verify you're a human through a personal photo"}
+                value={'Verify with Selfie'}
               />
             </TouchableOpacity>
           )}
@@ -140,8 +140,6 @@ const getStylesFromProps = ({ theme }) => {
     },
     topMargin: {
       marginTop: 10,
-
-      // marginBottom: 10,
     },
   }
 }

@@ -10,6 +10,8 @@ import { useScreenState } from '../appNavigation/stackNavigation'
 
 import { withStyles } from '../../lib/styles'
 
+const TITLE = 'Upload Photo'
+
 export type UploadPhotoProps = {
   profile: {
     avatar: string,
@@ -111,5 +113,9 @@ const getStylesFromProps = ({ theme }) => ({
     flex: 1,
   },
 })
+
+UploadPhoto.navigationOptions = {
+  title: TITLE,
+}
 
 export default withStyles(getStylesFromProps)(UploadPhoto)

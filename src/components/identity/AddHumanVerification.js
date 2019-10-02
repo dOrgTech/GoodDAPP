@@ -4,9 +4,9 @@ import { withTheme } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native'
 import InputRounded from '../common/form/InputRounded'
 import { useWrappedUserStorage } from '../../lib/gundb/useWrappedStorage'
-import { CustomButton, Section, Wrapper } from '../common'
+import { Section, Text, Wrapper } from '../common'
 
-const TITLE = 'Upload personal photo'
+const TITLE = 'ADD PERSONAL PHOTO'
 
 const AddHumanVerification = ({ screenProps, theme, styles }) => {
   const wrappedUserStorage = useWrappedUserStorage()
@@ -47,6 +47,26 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section>
         <Section.Row>
+          <Text
+            style={{
+              color: theme.colors.darkGray,
+              textAlign: 'left',
+              marginTop: 10,
+              marginLeft: 20,
+              marginRight: 20,
+              marginBottom: 20,
+            }}
+            disabled={!changed || saving}
+            loading={saving}
+            onPress={saveAvatar}
+            color={theme.colors.darkGray}
+          >
+            Upload or take a picture of yourself with the characters {"'"}
+            {global.wallet.getAccountForType('gd').slice(1, 7)}
+            {"'"} and today{"'"}s date, {"'"}02/09/2019{"'"}, written down on a piece of paper.
+          </Text>
+        </Section.Row>
+        <Section.Row>
           <TouchableOpacity onPress={handleUploadPhoto}>
             <InputRounded
               disabled={true}
@@ -66,17 +86,6 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
             />
           </TouchableOpacity>
         </Section.Row>
-        <Section.Stack justifyContent="flex-end" grow>
-          <CustomButton
-            disabled={!changed || saving}
-            loading={saving}
-            onPress={saveAvatar}
-            color={theme.colors.darkBlue}
-          >
-            Upload or take a picture of yourself with {global.wallet.getAccountForType('gd').slice(1, 7)} and today{"'"}
-            s date written down on a piece of paper.
-          </CustomButton>
-        </Section.Stack>
       </Section>
     </Wrapper>
   )

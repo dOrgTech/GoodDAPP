@@ -4,7 +4,7 @@ import { withTheme } from 'react-native-paper'
 import { TouchableOpacity } from 'react-native'
 import InputRounded from '../common/form/InputRounded'
 import { useWrappedUserStorage } from '../../lib/gundb/useWrappedStorage'
-import { CustomButton, Section, Wrapper } from '../common'
+import { Section, Text, Wrapper } from '../common'
 
 const TITLE = 'Upload Photo ID'
 
@@ -43,6 +43,24 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
     <Wrapper>
       <Section>
         <Section.Row>
+          <Text
+            style={{
+              color: theme.colors.darkGray,
+              textAlign: 'left',
+              marginTop: 10,
+              marginLeft: 20,
+              marginRight: 20,
+              marginBottom: 20,
+            }}
+            disabled={!changed || saving}
+            loading={saving}
+            onPress={saveAvatar}
+            color={theme.colors.darkGray}
+          >
+            Upload a picture of your Photo ID so we can verify your account.
+          </Text>
+        </Section.Row>
+        <Section.Row>
           <TouchableOpacity onPress={handleUploadPhoto}>
             <InputRounded
               disabled={true}
@@ -62,16 +80,6 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
             />
           </TouchableOpacity>
         </Section.Row>
-        <Section.Stack justifyContent="flex-end" grow>
-          <CustomButton
-            disabled={!changed || saving}
-            loading={saving}
-            onPress={saveAvatar}
-            color={theme.colors.darkBlue}
-          >
-            Upload a picture of your photo id so we can verify you{"'"}re account.
-          </CustomButton>
-        </Section.Stack>
       </Section>
     </Wrapper>
   )
