@@ -1,5 +1,6 @@
 // @flow
 import React, { createRef } from 'react'
+import { Image } from 'react-native'
 
 // import get from 'lodash/get'
 import type { DashboardProps } from '../Dashboard'
@@ -12,7 +13,6 @@ import { SaveButton, Section, Wrapper } from '../../common'
 import { useScreenState } from '../../appNavigation/stackNavigation'
 
 // import FRapi from './FaceRecognitionAPI'
-import Video from './Video'
 
 // import type FaceRecognitionResponse from './FaceRecognitionAPI'
 import MsrCapture from './MsrCapture'
@@ -20,17 +20,18 @@ import MsrCapture from './MsrCapture'
 // import { type ZoomCaptureResult } from './Zoom'
 // import zoomSdkLoader from './ZoomSdkLoader'
 
-const log = logger.child({ from: 'FaceRecognition' })
+const log = logger.child({ from: 'TakePhoto' })
 
-type PhotoUploadProps = DashboardProps & {}
+type TakePhotoProps = DashboardProps & {}
 
 type State = {
   showMsrCapture: boolean,
   showGuidedFR: boolean,
   sessionId: string | void,
   loadingText: string,
-  facemap: Blob,
   mediaReady: boolean,
+  photo: Blob,
+  photoURL: DOMString,
   captureResult: ZoomCaptureResult,
   isWhitelisted: boolean | void,
   showHelper: boolean,
@@ -43,7 +44,7 @@ type State = {
  * 3. Display relevant error messages
  * 4. Enables/Disables UI components as dependancy in the state of the process
  **/
-class PhotoUpload extends React.Component<PhotoUploadProps, State> {
+class TakePhotoClass extends React.Component<TakePhotoProps, State> {
   constructor(props) {
     super(props)
     this.state = {
@@ -52,19 +53,13 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
       showGuidedFR: false,
       sessionId: undefined,
       loadingText: '',
-      video: new Blob([], { type: 'video/webm' }),
-      videoURL: undefined,
       mediaReady: false,
       captureResult: {},
       isWhitelisted: undefined,
       showHelper: true,
     }
-    this.screenProps = props.screenProps
-    const [screenState] = useScreenState(this.screenProps)
-    this.screenState = screenState
-    this.screenState.onDone = this.screenState.onDone
+    this.onDone = props.onDone
     this.onCaptureResult = this.onCaptureResult.bind(this)
-    this.image = createRef(HTMLImageElement)
     this.canvas = createRef(HTMLCanvasElement)
   }
 
@@ -117,8 +112,9 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
   onCaptureResult = (): void => {
     log.debug('captureresult')
     const photo = this.canvas.current.toDataURL('image/png')
-    this.image.current.setAttribute('src', photo)
-    this.setState({ photo })
+    const photoURL = URL.createObjectURL(photoURL)
+    log(photo)
+    this.setState({ photo, photoURL })
   }
 
   // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
@@ -149,7 +145,7 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
 
   done = photo => {
     this.onDone(photo)
-    this.screenProps.pop()
+    log.debug(photo)
   }
 
   render() {
@@ -157,8 +153,10 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
     return (
       <Wrapper>
         <Section grow>
-          {this.state.videoURL && <Video loop url={this.state.videoURL} />}
-          {!this.state.videoURL && (
+          {this.state.photoURL && (
+            <Image style={{ width: this.width, height: this.height }} source={this.state.photoURL} />
+          )}
+          {!this.state.photo && (
             <canvas ref={this.canvas}>
               <MsrCapture
                 screenProps={this.props.screenProps}
@@ -178,9 +176,18 @@ class PhotoUpload extends React.Component<PhotoUploadProps, State> {
     )
   }
 }
+const TakePhoto = ({ screenProps }) => {
+  const [screenState] = useScreenState(screenProps)
+  const { identity } = screenState
+  const onDone = photo => {
+    log.debug(photo)
+    screenProps.pop({ identity: { ...identity, photo } })
+  }
+  return <TakePhotoClass {...{ ...screenState, onDone }} />
+}
 
-PhotoUpload.navigationOptions = {
-  title: 'Face Verification',
+TakePhoto.navigationOptions = {
+  title: 'Take Photo',
   navigationBarHidden: false,
 }
-export default PhotoUpload
+export default TakePhoto

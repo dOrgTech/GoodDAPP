@@ -5,6 +5,7 @@ import React, { createRef } from 'react'
 import type { DashboardProps } from '../Dashboard'
 
 import logger from '../../../lib/logger/pino-logger'
+import API from '../../../lib/API/api'
 import { SaveButton, Section, Wrapper } from '../../common'
 
 // import { fireEvent } from '../../../lib/analytics/analytics'
@@ -20,7 +21,7 @@ import MsrCapture from './MsrCapture'
 // import { type ZoomCaptureResult } from './Zoom'
 // import zoomSdkLoader from './ZoomSdkLoader'
 
-const log = logger.child({ from: 'FaceRecognition' })
+const log = logger.child({ from: 'TakeVideo' })
 
 type TakeVideoProps = DashboardProps & {}
 
@@ -29,8 +30,9 @@ type State = {
   showGuidedFR: boolean,
   sessionId: string | void,
   loadingText: string,
-  facemap: Blob,
   mediaReady: boolean,
+  video: Blob,
+  videoURL: DOMString,
   captureResult: ZoomCaptureResult,
   isWhitelisted: boolean | void,
   showHelper: boolean,
@@ -43,7 +45,7 @@ type State = {
  * 3. Display relevant error messages
  * 4. Enables/Disables UI components as dependancy in the state of the process
  **/
-class TakeVideo extends React.Component<TakeVideoProps, State> {
+class TakeVideoClass extends React.Component<TakeVideoProps, State> {
   constructor(props) {
     super(props)
     this.state = {
@@ -59,10 +61,8 @@ class TakeVideo extends React.Component<TakeVideoProps, State> {
       isWhitelisted: undefined,
       showHelper: true,
     }
-    this.screenProps = props.screenProps
-    const [screenState] = useScreenState(this.screenProps)
-    this.screenState = screenState
-    this.screenState.onDone = this.screenState.onDone
+
+    this.onDone = props.onDone
     this.onCaptureResult = this.onCaptureResult.bind(this)
   }
 
@@ -150,7 +150,6 @@ class TakeVideo extends React.Component<TakeVideoProps, State> {
 
   done = video => {
     this.onDone(video)
-    this.screenProps.pop()
   }
 
   render() {
@@ -177,6 +176,19 @@ class TakeVideo extends React.Component<TakeVideoProps, State> {
     )
   }
 }
+
+const TakeVideo = ({ screenProps }) => {
+  const [screenState] = useScreenState(screenProps)
+  const { identityForm, identity } = screenState
+  const onDone = async video => {
+    log.debug(video)
+    const hash = await API.uploadContent(video)
+    identityForm.$.uploads.$.video.data = { hash, host: 'ipfs' }
+    screenProps.pop({ identity, identityForm })
+  }
+  return <TakeVideoClass {...{ ...screenState, onDone }} />
+}
+
 TakeVideo.navigationOptions = {
   title: 'Take Video',
   navigationBarHidden: false,
