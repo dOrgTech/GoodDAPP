@@ -2,16 +2,20 @@
 import { Dimensions } from 'react-native'
 import React, { createRef, useEffect } from 'react'
 import { isMobile } from 'mobile-device-detect'
+import logger from '../../../lib/logger/pino-logger'
 
-// import logger from '../../../lib/logger/pino-logger'
-
-// const log = logger.child({ from: 'Camera' })
+const log = logger.child({ from: 'Camera' })
 
 type CameraProps = {
   width: number,
   height: number,
-  onCameraLoad: (track: MediaStreamTrack) => Promise<void>,
+  onCameraLoad: (track: MediaStreamTrack | MedaStream) => Promise<void>,
   onError: (result: string) => void,
+  track: boolean,
+  stream: boolean,
+  record: boolean,
+
+  /* oncameraload, switch to typeguards */
 }
 
 /**
@@ -31,14 +35,13 @@ const CameraComp = (props: CameraProps) => {
       },
     },
   ]
-
   useEffect(() => {
-    console.log('mounting camera', videoPlayerRef)
+    log.debug('mounting camera', videoPlayerRef)
     if (videoPlayerRef === null) {
       return
     }
     const { width, height } = Dimensions.get('window')
-    console.log({ width, height })
+    log.debug({ width, height })
 
     //prevent landscape
     if (isMobile && width > height) {
@@ -46,9 +49,15 @@ const CameraComp = (props: CameraProps) => {
     }
     awaitGetUserMedia()
     return () => {
-      console.log('Unloading video track?', !!this.videoTrack)
-      this.videoTrack && this.videoTrack.stop()
-      this.videoTrack = null
+      if (props.track) {
+        log.debug('Unloading video track?', !!this.videoTrack)
+        this.videoTrack && this.videoTrack.stop()
+        this.videoTrack = null
+      } else if (props.stream) {
+        log.debug('Pausing video stream?', !!this.videoStream)
+
+        // videoPlayerRef.current.pause()
+      }
     }
   }, [videoPlayerRef])
 
@@ -56,18 +65,18 @@ const CameraComp = (props: CameraProps) => {
     for (let i = 0; i < acceptableConstraints.length; i++) {
       const constraints = acceptableConstraints[i]
       try {
-        console.log('getStream', constraints)
+        log.debug('getStream', constraints)
         //eslint-disable-next-line
         let device = await window.navigator.mediaDevices.getUserMedia(constraints)
-        console.log('getStream success:', device)
+        log.debug('getStream success:', device)
         return device
       } catch (e) {
-        console.log('Failed getting stream', constraints, e)
+        log.warn('Failed getting stream', constraints, e)
       }
     }
     let error =
       'Unable to get a video stream. Please ensure you give permission to this website to access your camera, and have a 720p+ camera plugged in'
-    console.log('No valid stream found', error)
+    log.error('No valid stream found', error)
     throw new Error(error)
   }
 
@@ -100,13 +109,24 @@ const CameraComp = (props: CameraProps) => {
         let error = 'No video player found'
         throw new Error(error)
       }
-      this.videoTrack = stream
-      videoPlayerRef.current.srcObject = stream
-      videoPlayerRef.current.addEventListener('play', () => {
-        props.onCameraLoad(stream)
-      })
+      if (props.track) {
+        const videoTrack = stream.getVideoTracks()[0]
+        this.videoTrack = videoTrack
+
+        videoPlayerRef.current.srcObject = stream
+        videoPlayerRef.current.addEventListener('play', () => {
+          props.onCameraLoad(videoTrack)
+        })
+      } else if (props.stream) {
+        this.videoTrack = stream
+
+        videoPlayerRef.current.srcObject = stream
+        videoPlayerRef.current.addEventListener('play', () => {
+          props.onCameraLoad(stream)
+        })
+      }
     } catch (e) {
-      console.log('getUserMedia failed:', e.message, e)
+      log.error('getUserMedia failed:', e.message, e)
       props.onError(e)
     }
   }
@@ -114,14 +134,13 @@ const CameraComp = (props: CameraProps) => {
   return (
     <>
       <div style={styles.videoContainer}>
-        <video id="msr-video-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
+        <video id="zoom-video-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
       </div>
     </>
   )
 }
 
 /* */
-
 export const Camera = React.memo(CameraComp)
 export const getResponsiveVideoDimensions = () => {
   const { width, height } = Dimensions.get('window')
@@ -147,7 +166,7 @@ export const getResponsiveVideoDimensionsNew = () => {
   const containerWidth = Math.min(475, width) - 30
   const containerHeight = (containerWidth / 2) * 1.77777778
 
-  console.log({ containerHeight, containerWidth })
+  log.debug({ containerHeight, containerWidth })
 
   //we transpose the video so height is width
   if (height > containerWidth) {

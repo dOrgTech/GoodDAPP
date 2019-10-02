@@ -38,17 +38,21 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const store = GDStore.useStore()
   const storedIdentity = store.get('identity')
   const [showErrorDialog] = useErrorDialog()
-  const identityForm = _.hasIn(screenState,'identity.form') ? screenState.identity.form : new IdentityDefinitionForm()
-  const identity = { ...storedIdentity}
+  const identityForm = _.hasIn(screenState, 'identity.form') ? screenState.identity.form : new IdentityDefinitionForm()
+  const identity = { ...storedIdentity }
   Object.assign(identity)
 
-  if (_.hasIn(screenState,'identity.form') ) {
+  if (_.hasIn(screenState, 'identity.form')) {
     if (storedIdentity.json) {
       identityForm.$.data = storedIdentity.json
     }
   }
-  Object.assign(...storedIdentity, screenState.video ? screenState
-
+  if (_.hasIn(screenState, 'identity.video')) {
+    Object.assign(...storedIdentity, { video: screenState.identity.video })
+  }
+  if (_.hasIn(screenState, 'identity.photo')) {
+    Object.assign(...storedIdentity, { photo: screenState.identity.photo })
+  }
 
   //const [socialPosts, setSocialPosts] = useState({})
 
@@ -105,14 +109,13 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
       )
     } else {
       store.set('identity')({ ...identity })
-      let photo = { uri: source.uri}
-      let formdata = new FormData();
+      let formdata = new FormData()
 
-      formdata.append("product[name]", 'test')
-      formdata.append("product[price]", 10)
-      formdata.append("product[category_ids][]", 2)
-      formdata.append("product[description]", '12dsadadsa')
-      formdata.append("product[images_attributes[0][file]]", {uri: photo.uri, name: 'image.jpg', type: 'image/jpeg'})
+      formdata.append('product[name]', 'test')
+      formdata.append('product[price]', 10)
+      formdata.append('product[category_ids][]', 2)
+      formdata.append('product[description]', '12dsadadsa')
+      formdata.append('product[images_attributes[0][file]]', { uri: identity.photo, name: 'photo', type: 'image/jpeg' })
       API.proposeId({ ...identity })
     }
   }
@@ -130,7 +133,19 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             theme={theme}
             id={'photo'}
             style={styles.borderedBottomStyle}
-            onPress={() => screenProps.push('UploadPhoto', { from: 'AddIdentityMenu',  })}
+            onPress={() => screenProps.push('TakePhoto', { from: 'AddIdentityMenu' })}
+          />
+          <IdentityView
+            theme={theme}
+            id={'video'}
+            style={styles.borderedBottomStyle}
+            onPress={() => {
+              try {
+                screenProps.push('TakeVideo', { from: 'AddIdentityMenu', onDone: () => null })
+              } catch (e) {
+                console.log(e)
+              }
+            }}
           />
           {/*
           {!profile.photo && (
