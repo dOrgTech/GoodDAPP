@@ -36,7 +36,7 @@ const AddHumanVerification = ({ screenProps, theme, styles }) => {
     screenProps.push('UploadPhoto', { photoType: 'photoId', onChange: handleAvatarChange, onClose: handleAvatarClose })
   }
   const handleTakePhoto = () => {
-    screenProps.push('FaceVerification')
+    screenProps.push('TakePhoto')
   }
 
   return (
