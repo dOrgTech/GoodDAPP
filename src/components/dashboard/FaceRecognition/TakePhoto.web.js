@@ -1,6 +1,7 @@
 // @flow
 import React, { createRef } from 'react'
-import { Image } from 'react-native'
+
+// import { Image } from 'react-native'
 
 // import get from 'lodash/get'
 import type { DashboardProps } from '../Dashboard'
@@ -15,7 +16,7 @@ import { useScreenState } from '../../appNavigation/stackNavigation'
 // import FRapi from './FaceRecognitionAPI'
 
 // import type FaceRecognitionResponse from './FaceRecognitionAPI'
-import MsrCapture from './MsrCapture'
+import PhotoCapture from './PhotoCapture'
 
 // import { type ZoomCaptureResult } from './Zoom'
 // import zoomSdkLoader from './ZoomSdkLoader'
@@ -109,12 +110,29 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
     log.debug({ containerWidth, width: this.width, height: this.height })
   }
 
-  onCaptureResult = (): void => {
-    log.debug('captureresult')
-    const photo = this.canvas.current.toDataURL('image/png')
-    const photoURL = URL.createObjectURL(photoURL)
-    log(photo)
-    this.setState({ photo, photoURL })
+  onCaptureResult = ({ photo, ...dimensions }): void => {
+    // this.canvas.0bute('width', this.width)
+    // this.canvas.setAttribute('height', this.height)
+
+    // var context = this.canvas.getContext('2d')
+    // this.canvas.width = this.width
+    // this.canvas.height = this.height
+    // this.context.drawImage(this.video, 0, 0, this.width, this.height)
+
+    // var data = canvas.toDataURL('image/png')
+    // photo.setAttribute('src', data)
+
+    // log.debug('captureresult')
+    // const photo = this.canvas.current.toDataURL('image/png')
+    const photoURL = URL.createObjectURL(photo)
+    this.setState({ photo, photoURL, ...dimensions })
+
+    // var context = canvas.getContext('2d')
+    // context.fillStyle = '#AAA'
+    // context.fillRect(0, 0, canvas.width, canvas.height)
+
+    // var data = canvas.toDataURL('image/png')
+    // photo.setAttribute('src', data)
   }
 
   // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
@@ -154,19 +172,22 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
       <Wrapper>
         <Section grow>
           {this.state.photoURL && (
-            <Image style={{ width: this.width, height: this.height }} source={this.state.photoURL} />
+            <img
+              id="captured-photo-img"
+              src={this.state.photoURL}
+              width={this.state.width}
+              height={this.state.height}
+            />
           )}
           {!this.state.photo && (
-            <canvas ref={this.canvas}>
-              <MsrCapture
-                screenProps={this.props.screenProps}
-                onCaptureResult={this.onCaptureResult}
-                showMsrCapture={this.state.mediaReady && showMsrCapture}
-                loadedZoom={this.loadedZoom}
-                onError={this.showFRError}
-                showHelper={this.state.showHelper}
-              />
-            </canvas>
+            <PhotoCapture
+              screenProps={this.props.screenProps}
+              onCaptureResult={this.onCaptureResult}
+              showMsrCapture={this.state.mediaReady && showMsrCapture}
+              loadedZoom={this.loadedZoom}
+              onError={this.showFRError}
+              showHelper={this.state.showHelper}
+            />
           )}
           <Section.Row>
             <SaveButton onPress={() => this.done(this.state.photo)} />

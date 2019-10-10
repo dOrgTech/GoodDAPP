@@ -3,15 +3,18 @@ import { Dimensions } from 'react-native'
 import React, { createRef, useEffect } from 'react'
 import { isMobile } from 'mobile-device-detect'
 
-// import logger from '../../../lib/logger/pino-logger'
+import logger from '../../../lib/logger/pino-logger'
 
-// const log = logger.child({ from: 'Camera' })
+const log = logger.child({ from: 'Camera' })
 
 type CameraProps = {
   width: number,
   height: number,
   onCameraLoad: (track: MediaStreamTrack) => Promise<void>,
   onError: (result: string) => void,
+  stream?: Boolean,
+  track?: Boolean,
+  videoRef?: Boolean,
 }
 
 /**
@@ -46,9 +49,9 @@ const CameraComp = (props: CameraProps) => {
     }
     awaitGetUserMedia()
     return () => {
-      console.log('Unloading video track?', !!this.videoTrack)
-      this.videoTrack && this.videoTrack.stop()
-      this.videoTrack = null
+      // console.log('Unloading video track?', !!this.videoTrack)
+      // this.videoTrack && this.videoTrack.stop()
+      // this.videoTrack = null
     }
   }, [videoPlayerRef])
 
@@ -102,9 +105,20 @@ const CameraComp = (props: CameraProps) => {
       }
       this.videoTrack = stream
       videoPlayerRef.current.srcObject = stream
+      log.debug('getusermedia')
+      log.debug(props)
       videoPlayerRef.current.addEventListener('play', () => {
-        props.onCameraLoad(stream)
+        if (props.stream) {
+          log.debug('is stream')
+          props.onCameraLoad(stream)
+        } else if (props.videoRef) {
+          log.debug('is ref')
+          log.debug(videoPlayerRef)
+          console.dir(videoPlayerRef)
+          props.onCameraLoad(videoPlayerRef)
+        }
       })
+      log.debug('eventlistener done')
     } catch (e) {
       console.log('getUserMedia failed:', e.message, e)
       props.onError(e)

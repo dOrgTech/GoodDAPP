@@ -150,11 +150,10 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
               value={'Verify your selfie'}
             />
           </TouchableOpacity>
-          <SaveButton disabled={false} onPress={handleSave} onPressDone={() => null} />
+          <Section.Row style={styles.borderedBottomStyle}>
+            <SaveButton onPress={handleSave} text="Submit Your Identity" />
+          </Section.Row>
         </Section.Stack>
-        <Section.Row style={styles.topMargin}>
-          <SaveButton onPress={() => screenProps.pop()} text="Submit Your Identity" />
-        </Section.Row>
       </Section>
     </Wrapper>
   )
@@ -169,7 +168,7 @@ const getStylesFromProps = ({ theme }) => {
     borderedBottomStyle: {
       borderBottomColor: theme.colors.lightGray,
       borderBottomWidth: 1,
-      marginBottom: 8,
+      marginBottom: 20,
     },
     suffixIcon: {
       alignItems: 'center',

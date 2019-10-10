@@ -101,8 +101,6 @@ export default createStackNavigator({
   GenericSocial,
   FaceRecognition,
   AddHumanVerification,
-
-  // UploadPhoto,
   AddPhotoId,
   TakePhoto,
   TakeVideo,
