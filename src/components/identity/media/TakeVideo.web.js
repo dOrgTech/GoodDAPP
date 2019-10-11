@@ -6,7 +6,7 @@ import type { DashboardProps } from '../../dashboard/Dashboard'
 
 import logger from '../../../lib/logger/pino-logger'
 import API from '../../../lib/API/api'
-import { SaveButton, Section, Wrapper } from '../../common'
+import { RetryButton, SaveButton, Section, Wrapper } from '../../common'
 
 // import { fireEvent } from '../../../lib/analytics/analytics'
 
@@ -124,6 +124,10 @@ class TakeVideoClass extends React.Component<TakeVideoProps, State> {
     this.onDone(video)
   }
 
+  retry = () => {
+    this.setState({ video: null, videoURL: null })
+  }
+
   render() {
     const { showMsrCapture } = this.state
     return (
@@ -142,6 +146,12 @@ class TakeVideoClass extends React.Component<TakeVideoProps, State> {
           )}
           <Section.Row>
             <SaveButton onPress={() => this.done(this.state.video)} />
+          </Section.Row>
+          <br />
+          <br />
+          <br />
+          <Section.Row>
+            <RetryButton onPress={this.retry} />
           </Section.Row>
         </Section>
       </Wrapper>

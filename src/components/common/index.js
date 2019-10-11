@@ -16,6 +16,7 @@ import LoadingIndicator from "./view/LoadingIndicator";
 import NumPadKeyboard from "./view/NumPadKeyboard";
 import QRCode from "./view/QRCode";
 import SaveButton from "./buttons/SaveButton";
+import RetryButton from "./buttons/RetryButton";
 import ScanQRButton from "./buttons/ScanQRButton";
 import AwaitButton from "./buttons/AwaitButton";
 import Section from "./layout/Section";
@@ -23,6 +24,7 @@ import ShareButton from "./buttons/ShareButton";
 import Text from "./view/Text";
 import UserAvatar from "./view/UserAvatar";
 import Wrapper from "./layout/Wrapper";
+
 import {
   Camera,
   getResponsiveVideoDimensions,
@@ -49,6 +51,7 @@ export {
   NumPadKeyboard,
   QRCode,
   SaveButton,
+  RetryButton,
   ScanQRButton,
   Section,
   ShareButton,
