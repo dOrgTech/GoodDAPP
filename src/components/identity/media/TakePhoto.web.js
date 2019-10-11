@@ -4,7 +4,7 @@ import React, { createRef } from 'react'
 // import { Image } from 'react-native'
 
 // import get from 'lodash/get'
-import type { DashboardProps } from '../Dashboard'
+import type { DashboardProps } from '../../dashboard/Dashboard'
 
 import logger from '../../../lib/logger/pino-logger'
 import { SaveButton, Section, Wrapper } from '../../common'
@@ -39,11 +39,10 @@ type State = {
 }
 
 /**
- * Responsible to orchestrate FaceReco process, using the following modules: ZoomCapture & FRapi.
- * 1. Loads ZoomCapture and recieve ZoomCaptureResult - the user video capture result after processed locally by ZoomSDK (Handled by ZoomCapture)
- * 2. Uses FRapi which is responsible to communicate with GoodServer and UserStorage on PhotoUpload related actions, and handle sucess / failure
- * 3. Display relevant error messages
- * 4. Enables/Disables UI components as dependancy in the state of the process
+ * Responsible to orchestrate video recording process process, using VideoCapture
+ * 1. Loads VideoCapture and receive png Blob - the user video capture result after drawn on invisible canvas and snapshot taken in PhotoCapture.js
+ * 2. Display relevant error messages
+ * 3. Enables/Disables UI components as dependancy in the state of the process
  **/
 class TakePhotoClass extends React.Component<TakePhotoProps, State> {
   constructor(props) {
@@ -75,7 +74,7 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
   height = 0
 
   componentWillUnmount = () => {
-    log.debug('Unloading ZoomSDK', this.loadedZoom)
+    log.debug('Unloading TakePhoto', this.loadedZoom)
     this.timeout && clearTimeout(this.timeout)
   }
 
@@ -111,22 +110,10 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
   }
 
   onCaptureResult = ({ photo, ...dimensions }): void => {
-    // this.canvas.0bute('width', this.width)
-    // this.canvas.setAttribute('height', this.height)
-
-    // var context = this.canvas.getContext('2d')
-    // this.canvas.width = this.width
-    // this.canvas.height = this.height
-    // this.context.drawImage(this.video, 0, 0, this.width, this.height)
-
-    // var data = canvas.toDataURL('image/png')
-    // photo.setAttribute('src', data)
-
-    // log.debug('captureresult')
-    // const photo = this.canvas.current.toDataURL('image/png')
     const photoURL = URL.createObjectURL(photo)
     this.setState({ photo, photoURL, ...dimensions })
 
+    // photo clear
     // var context = canvas.getContext('2d')
     // context.fillStyle = '#AAA'
     // context.fillRect(0, 0, canvas.width, canvas.height)
@@ -134,32 +121,6 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
     // var data = canvas.toDataURL('image/png')
     // photo.setAttribute('src', data)
   }
-
-  // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
-  //   try {
-  //     log.debug('Sending capture result to server', captureResult)
-  //     this.setState({
-  //       showMsrCapture: false,
-  //       showGuidedFR: true,
-  //       sessionId: captureResult.sessionId,
-  //     })
-  //     let result: PhotoUploadResponse = await FRapi.performPhotoUpload(captureResult)
-  //     log.debug('FR API:', { result })
-  //     if (!result || !result.ok) {
-  //       log.warn('FR API call failed:', { result })
-  //       this.showFRError(result.error) // TODO: rami
-  //     }
-
-  //     //else if (get(result, 'enrollResult.enrollmentIdentifier', undefined)) {
-  //     //   this.setState({ ...this.state, isAPISuccess: true })
-  //     // } else {
-  //     //   this.setState({ ...this.state, isAPISuccess: false })
-  //     // }
-  //   } catch (e) {
-  //     log.error('FR API call failed:', e.message, e)
-  //     this.showFRError(e.message)
-  //   }
-  // }
 
   done = photo => {
     this.onDone(photo)
@@ -172,6 +133,7 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
       <Wrapper>
         <Section grow>
           {this.state.photoURL && (
+            // eslint-disable-next-line jsx-a11y/alt-text
             <img
               id="captured-photo-img"
               src={this.state.photoURL}

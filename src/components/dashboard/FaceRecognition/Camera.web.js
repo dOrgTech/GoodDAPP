@@ -9,13 +9,8 @@ const log = logger.child({ from: 'Camera' })
 type CameraProps = {
   width: number,
   height: number,
-  onCameraLoad: (track: MediaStreamTrack | MedaStream) => Promise<void>,
+  onCameraLoad: (track: MediaStreamTrack) => Promise<void>,
   onError: (result: string) => void,
-  track: boolean,
-  stream: boolean,
-  record: boolean,
-
-  /* oncameraload, switch to typeguards */
 }
 
 /**
@@ -35,6 +30,7 @@ const CameraComp = (props: CameraProps) => {
       },
     },
   ]
+
   useEffect(() => {
     log.debug('mounting camera', videoPlayerRef)
     if (videoPlayerRef === null) {
@@ -49,15 +45,9 @@ const CameraComp = (props: CameraProps) => {
     }
     awaitGetUserMedia()
     return () => {
-      if (props.track) {
-        log.debug('Unloading video track?', !!this.videoTrack)
-        this.videoTrack && this.videoTrack.stop()
-        this.videoTrack = null
-      } else if (props.stream) {
-        log.debug('Pausing video stream?', !!this.videoStream)
-
-        // videoPlayerRef.current.pause()
-      }
+      log.debug('Unloading video track?', !!this.videoTrack)
+      this.videoTrack && this.videoTrack.stop()
+      this.videoTrack = null
     }
   }, [videoPlayerRef])
 
@@ -109,22 +99,13 @@ const CameraComp = (props: CameraProps) => {
         let error = 'No video player found'
         throw new Error(error)
       }
-      if (props.track) {
-        const videoTrack = stream.getVideoTracks()[0]
-        this.videoTrack = videoTrack
+      const videoTrack = stream.getVideoTracks()[0]
+      this.videoTrack = videoTrack
+      videoPlayerRef.current.srcObject = stream
 
-        videoPlayerRef.current.srcObject = stream
-        videoPlayerRef.current.addEventListener('play', () => {
-          props.onCameraLoad(videoTrack)
-        })
-      } else if (props.stream) {
-        this.videoTrack = stream
-
-        videoPlayerRef.current.srcObject = stream
-        videoPlayerRef.current.addEventListener('play', () => {
-          props.onCameraLoad(stream)
-        })
-      }
+      videoPlayerRef.current.addEventListener('play', () => {
+        props.onCameraLoad(videoTrack)
+      })
     } catch (e) {
       log.error('getUserMedia failed:', e.message, e)
       props.onError(e)
@@ -140,7 +121,6 @@ const CameraComp = (props: CameraProps) => {
   )
 }
 
-/* */
 export const Camera = React.memo(CameraComp)
 export const getResponsiveVideoDimensions = () => {
   const { width, height } = Dimensions.get('window')

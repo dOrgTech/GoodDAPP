@@ -12,8 +12,7 @@ type CameraProps = {
   height: number,
   onCameraLoad: (track: MediaStreamTrack) => Promise<void>,
   onError: (result: string) => void,
-  stream?: Boolean,
-  track?: Boolean,
+
   videoRef?: Boolean,
 }
 
@@ -36,12 +35,12 @@ const CameraComp = (props: CameraProps) => {
   ]
 
   useEffect(() => {
-    console.log('mounting camera', videoPlayerRef)
+    log.debug('mounting camera', videoPlayerRef)
     if (videoPlayerRef === null) {
       return
     }
     const { width, height } = Dimensions.get('window')
-    console.log({ width, height })
+    log.debug({ width, height })
 
     //prevent landscape
     if (isMobile && width > height) {
@@ -49,7 +48,7 @@ const CameraComp = (props: CameraProps) => {
     }
     awaitGetUserMedia()
     return () => {
-      // console.log('Unloading video track?', !!this.videoTrack)
+      // log.debug('Unloading video track?', !!this.videoTrack)
       // this.videoTrack && this.videoTrack.stop()
       // this.videoTrack = null
     }
@@ -59,18 +58,18 @@ const CameraComp = (props: CameraProps) => {
     for (let i = 0; i < acceptableConstraints.length; i++) {
       const constraints = acceptableConstraints[i]
       try {
-        console.log('getStream', constraints)
+        log.debug('getStream', constraints)
         //eslint-disable-next-line
         let device = await window.navigator.mediaDevices.getUserMedia(constraints)
-        console.log('getStream success:', device)
+        log.debug('getStream success:', device)
         return device
       } catch (e) {
-        console.log('Failed getting stream', constraints, e)
+        log.error('Failed getting stream', constraints, e)
       }
     }
     let error =
       'Unable to get a video stream. Please ensure you give permission to this website to access your camera, and have a 720p+ camera plugged in'
-    console.log('No valid stream found', error)
+    log.error('No valid stream found', error)
     throw new Error(error)
   }
 
@@ -78,7 +77,7 @@ const CameraComp = (props: CameraProps) => {
     videoElement: {
       ...getResponsiveVideoDimensions(),
 
-      /* REQUIRED - handle flipping of ZoOm interface.  users of selfie-style interfaces are trained to see their mirror image */
+      /* REQUIRED - handle flipping of camera interface.  users of selfie-style interfaces are trained to see their mirror image */
       transform: 'scaleX(-1)',
       overflow: 'hidden',
       justifySelf: 'center',
@@ -108,19 +107,11 @@ const CameraComp = (props: CameraProps) => {
       log.debug('getusermedia')
       log.debug(props)
       videoPlayerRef.current.addEventListener('play', () => {
-        if (props.stream) {
-          log.debug('is stream')
-          props.onCameraLoad(stream)
-        } else if (props.videoRef) {
-          log.debug('is ref')
-          log.debug(videoPlayerRef)
-          console.dir(videoPlayerRef)
-          props.onCameraLoad(videoPlayerRef)
-        }
+        props.onCameraLoad(videoPlayerRef)
       })
       log.debug('eventlistener done')
     } catch (e) {
-      console.log('getUserMedia failed:', e.message, e)
+      log.debug('getUserMedia failed:', e.message, e)
       props.onError(e)
     }
   }
@@ -161,7 +152,7 @@ export const getResponsiveVideoDimensionsNew = () => {
   const containerWidth = Math.min(475, width) - 30
   const containerHeight = (containerWidth / 2) * 1.77777778
 
-  console.log({ containerHeight, containerWidth })
+  log.debug({ containerHeight, containerWidth })
 
   //we transpose the video so height is width
   if (height > containerWidth) {

@@ -2,7 +2,7 @@
 import React, { createRef } from 'react'
 
 // import get from 'lodash/get'
-import type { DashboardProps } from '../Dashboard'
+import type { DashboardProps } from '../../dashboard/Dashboard'
 
 import logger from '../../../lib/logger/pino-logger'
 import API from '../../../lib/API/api'
@@ -13,10 +13,10 @@ import { SaveButton, Section, Wrapper } from '../../common'
 import { useScreenState } from '../../appNavigation/stackNavigation'
 
 // import FRapi from './FaceRecognitionAPI'
-import Video from './Video'
+import Video from '../../dashboard/FaceRecognition/Video'
 
 // import type FaceRecognitionResponse from './FaceRecognitionAPI'
-import MsrCapture from './MsrCapture'
+import MsrCapture from './VideoCapture'
 
 // import { type ZoomCaptureResult } from './Zoom'
 // import zoomSdkLoader from './ZoomSdkLoader'
@@ -39,11 +39,10 @@ type State = {
 }
 
 /**
- * Responsible to orchestrate FaceReco process, using the following modules: ZoomCapture & FRapi.
- * 1. Loads ZoomCapture and recieve ZoomCaptureResult - the user video capture result after processed locally by ZoomSDK (Handled by ZoomCapture)
- * 2. Uses FRapi which is responsible to communicate with GoodServer and UserStorage on PhotoUpload related actions, and handle sucess / failure
- * 3. Display relevant error messages
- * 4. Enables/Disables UI components as dependancy in the state of the process
+ * Responsible to orchestrate video recording process process, using VideoCapture
+ * 1. Loads VideoCapture and receive video Blob - the user video capture result after recording by MediaStream in VideoCapture.js
+ * 2. Display relevant error messages
+ * 3. Enables/Disables UI components as dependancy in the state of the process
  **/
 class TakeVideoClass extends React.Component<TakeVideoProps, State> {
   constructor(props) {
@@ -77,7 +76,7 @@ class TakeVideoClass extends React.Component<TakeVideoProps, State> {
   height = 0
 
   componentWillUnmount = () => {
-    log.debug('Unloading ZoomSDK', this.loadedZoom)
+    log.debug('Unloading TakeVideo')
     this.timeout && clearTimeout(this.timeout)
   }
 
@@ -113,40 +112,13 @@ class TakeVideoClass extends React.Component<TakeVideoProps, State> {
   }
 
   onCaptureResult = (captureResult?: Blob): void => {
-    log.debug('captureresult')
+    log.debug('webm capture result')
 
-    /* do things with image */
+    /* creates URL and adds video and URL to state */
     const video = captureResult
     const videoURL = URL.createObjectURL(video)
-    log.debug(videoURL)
     this.setState({ videoURL, video })
   }
-
-  // startFRProcessOnServer = async (captureResult: ZoomCaptureResult) => {
-  //   try {
-  //     log.debug('Sending capture result to server', captureResult)
-  //     this.setState({
-  //       showMsrCapture: false,
-  //       showGuidedFR: true,
-  //       sessionId: captureResult.sessionId,
-  //     })
-  //     let result: PhotoUploadResponse = await FRapi.performPhotoUpload(captureResult)
-  //     log.debug('FR API:', { result })
-  //     if (!result || !result.ok) {
-  //       log.warn('FR API call failed:', { result })
-  //       this.showFRError(result.error) // TODO: rami
-  //     }
-
-  //     //else if (get(result, 'enrollResult.enrollmentIdentifier', undefined)) {
-  //     //   this.setState({ ...this.state, isAPISuccess: true })
-  //     // } else {
-  //     //   this.setState({ ...this.state, isAPISuccess: false })
-  //     // }
-  //   } catch (e) {
-  //     log.error('FR API call failed:', e.message, e)
-  //     this.showFRError(e.message)
-  //   }
-  // }
 
   done = video => {
     this.onDone(video)
@@ -181,7 +153,6 @@ const TakeVideo = ({ screenProps }) => {
   const [screenState] = useScreenState(screenProps)
   const { identityForm, identity } = screenState
   const onDone = async video => {
-    log.debug(video)
     const hash = await API.uploadContent(video)
     identityForm.$.uploads.$.video.data = { hash, host: 'ipfs' }
     screenProps.pop({ identity, identityForm })
