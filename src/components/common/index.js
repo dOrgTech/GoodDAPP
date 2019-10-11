@@ -21,6 +21,7 @@ import Section from './layout/Section'
 import Text from './view/Text'
 import UserAvatar from './view/UserAvatar'
 import Wrapper from './layout/Wrapper'
+import { Camera, getResponsiveVideoDimensions, getResponsiveVideoDimensionsNew } from './media/Camera.web'
 
 export {
   Address,
@@ -47,4 +48,7 @@ export {
   Text,
   UserAvatar,
   Wrapper,
+  Camera,
+  getResponsiveVideoDimensions,
+  getResponsiveVideoDimensionsNew,
 }

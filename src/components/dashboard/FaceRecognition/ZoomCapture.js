@@ -193,7 +193,7 @@ class ZoomCapture extends React.Component<ZoomCaptureProps> {
               ) : null}
             </View>
             <div id="zoom-interface-container" style={{ position: 'absolute' }} />
-            {<Camera key="camera" track onCameraLoad={this.cameraReady} onError={this.props.onError} />}
+            {<Camera key="camera" onCameraLoad={this.cameraReady} onError={this.props.onError} />}
           </div>
         </View>
       </View>

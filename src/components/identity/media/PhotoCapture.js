@@ -3,9 +3,8 @@ import React, { createRef, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
 import { Text } from 'react-native-paper'
 import { isMobile } from 'mobile-device-detect'
-import MediaStreamRecorder from 'msr'
 import SimpleStore from '../../../lib/undux/SimpleStore'
-import { CustomButton } from '../../common'
+import { Camera, CustomButton, getResponsiveVideoDimensions } from '../../common'
 
 // import { Section } from '../../common'
 import logger from '../../../lib/logger/pino-logger'
@@ -21,9 +20,8 @@ import WebAngleGood from '../../../assets/zoom/zoom-face-guy-angle-good-web.png'
 import LightingBad1 from '../../../assets/zoom/zoom-face-guy-lighting-back-web.png'
 import LightingBad2 from '../../../assets/zoom/zoom-face-guy-lighting-side-web.png'
 import LightingGood from '../../../assets/zoom/zoom-face-guy-lighting-good-web.png'
-import { Camera, getResponsiveVideoDimensions } from './Camera.web'
 
-const log = logger.child({ from: 'MsrCapture' })
+const log = logger.child({ from: 'VideoCapture' })
 
 // TODO: Rami - what is type compared to class?
 //TODO: Rami - should I handle onEror and create a class instead of type?
@@ -109,33 +107,31 @@ const HelperWizard = props => {
 }
 
 /**
- * Responsible for Zoom client SDK triggering:
- * 1. Calls zoom.capture() on the camera capture (Recieved from Camera component)
- * 2. Triggers callback when captureResult is ready
+ * Responsible for capturing photo:
+ * 1. Uses HTMLVideoElement to draw image on hidden canvas, exports snapshot of canvas into png
+ * 2. Triggers callback when png blob is ready
  */
-class MsrCapture extends React.Component {
+class VideoCapture extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       cameraReady: false,
     }
     this.captureUserMediaMsr = this.captureUserMediaMsr.bind(this)
-    log.debug('msrcapture')
-    this.image = createRef(HTMLImageElement)
-    this.canvas = createRef(HTMLCanvasElement)
+    log.debug('PhotoCapture')
   }
 
   videoStream: MediaStream
 
-  cameraReady = async (stream: MediaStream) => {
+  cameraReady = async ref => {
     log.debug('camera ready')
-    this.videoStream = stream
+    this.videoRef = ref
+    this.canvasRef = createRef(HTMLCanvasElement)
     try {
-      // log.debug('zoom initializes capture..')
-      // let zoomSDK = this.props.loadedZoom
-      // this.zoom = new Zoom(zoomSDK)
-      // await this.zoom.ready
-      this.setState({ cameraReady: true }, () => this.props.store.set('loadingIndicator')({ loading: false }))
+      this.setState(
+        { cameraReady: true, width: this.videoRef.current.videoWidth, height: this.videoRef.current.videoHeight },
+        () => this.props.store.set('loadingIndicator')({ loading: false })
+      )
       if (this.props.showHelper === false) {
         await this.captureUserMediaMsr()
       }
@@ -148,6 +144,38 @@ class MsrCapture extends React.Component {
   captureUserMediaMsr = async () => {
     log.debug('helper done')
     try {
+      const context = this.canvasRef.current.getContext('2d')
+      context.drawImage(
+        this.videoRef.current,
+        0,
+        0,
+        this.videoRef.current.videoWidth,
+        this.videoRef.current.videoHeight
+      )
+
+      const onCaptureResult = this.props.onCaptureResult
+      const dimensions = { width: this.videoRef.current.videoWidth, height: this.videoRef.current.videoHeight }
+      const stream = this.videoRef.current.srcObject
+
+      this.canvasRef.current.toBlob(blob => {
+        log.debug('png result')
+
+        onCaptureResult({
+          photo: blob,
+          ...dimensions,
+        })
+        stream.getTracks().forEach(track => {
+          track.stop()
+          track.enabled = false
+        })
+      }, 'image/png')
+
+      // clear
+      // context.fillStyle = '#AAA'
+      // context.fillRect(0, 0, this.canvas.width, this.canvas.height)
+
+      // var data = canvas.toDataURL('image/png')
+      // photo.setAttribute('src', data)
     } catch (e) {
       log.debug('Failed on capture, error:', e.message, e)
       this.props.onError(e)
@@ -176,11 +204,13 @@ class MsrCapture extends React.Component {
               ) : null}
             </View>
             <div id="msr-interface-container" style={{ position: 'absolute' }} />
-            {
-              <canvas ref={this.canvas}>
-                <Camera key="camera" stream onCameraLoad={this.cameraReady} onError={this.props.onError} />
-              </canvas>
-            }
+            <canvas
+              ref={this.canvasRef}
+              height={this.state.height}
+              width={this.state.width}
+              style={{ display: 'none' }}
+            />
+            {<Camera key="camera" onCameraLoad={this.cameraReady} onError={this.props.onError} />}
           </div>
         </View>
       </View>
@@ -234,4 +264,4 @@ const getVideoContainerStyles = () => ({
   marginBottom: 0,
 })
 
-export default SimpleStore.withStore(MsrCapture)
+export default SimpleStore.withStore(VideoCapture)
