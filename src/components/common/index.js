@@ -23,6 +23,7 @@ import Text from './view/Text'
 import UserAvatar from './view/UserAvatar'
 import Wrapper from './layout/Wrapper'
 import { Camera, getResponsiveVideoDimensions, getResponsiveVideoDimensionsNew } from './media/Camera.web'
+import CaptureHelperWizard from './media/CaptureHelperWizard'
 
 export {
   Address,
@@ -51,6 +52,7 @@ export {
   UserAvatar,
   Wrapper,
   Camera,
+  CaptureHelperWizard,
   getResponsiveVideoDimensions,
   getResponsiveVideoDimensionsNew,
 }

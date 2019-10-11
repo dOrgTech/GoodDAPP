@@ -47,11 +47,6 @@ const CameraComp = (props: CameraProps) => {
       return props.onError('Please make sure your mobile is in portrait mode and try again.')
     }
     awaitGetUserMedia()
-    return () => {
-      // log.debug('Unloading video track?', !!this.videoTrack)
-      // this.videoTrack && this.videoTrack.stop()
-      // this.videoTrack = null
-    }
   }, [videoPlayerRef])
 
   const getStream = async (): Promise<MediaStream> => {
