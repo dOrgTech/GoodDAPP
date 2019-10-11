@@ -1,7 +1,7 @@
 import React from 'react'
 
 // import { useScreenState } from '../appNavigation/stackNavigation'
-import { getResponsiveVideoDimensions } from './Camera.web'
+import { getResponsiveVideoDimensions } from '../../common'
 
 export default ({ url, loop }) => {
   // const [screenState] = useScreenState(screenProps)

@@ -19,6 +19,7 @@ import SaveButton from "./buttons/SaveButton";
 import RetryButton from "./buttons/RetryButton";
 import ScanQRButton from "./buttons/ScanQRButton";
 import AwaitButton from "./buttons/AwaitButton";
+import CaptureHelperWizard from "./media/CaptureHelperWizard";
 import Section from "./layout/Section";
 import ShareButton from "./buttons/ShareButton";
 import Text from "./view/Text";
@@ -60,6 +61,7 @@ export {
   Wrapper,
   AwaitButton,
   Camera,
+  CaptureHelperWizard,
   getResponsiveVideoDimensions,
   getResponsiveVideoDimensionsNew
 };
