@@ -1,6 +1,7 @@
 // @flow
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
+import MediaStreamRecorder from 'msr'
 import SimpleStore from '../../../lib/undux/SimpleStore'
 import { Camera, CaptureHelperWizard, getResponsiveVideoDimensions } from '../../common'
 import logger from '../../../lib/logger/pino-logger'
@@ -44,7 +45,7 @@ class VideoCapture extends React.Component {
   captureUserMedia = async () => {
     log.debug('helper done')
     try {
-      var mediaRecorder = new MediaRecorder(this.videoStream)
+      var mediaRecorder = new MediaStreamRecorder(this.videoStream)
       mediaRecorder.mimeType = 'video/webm'
       const onCaptureResult = this.props.onCaptureResult
       const videoStream = this.videoStream
