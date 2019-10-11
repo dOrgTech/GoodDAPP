@@ -119,7 +119,7 @@ const CameraComp = (props: CameraProps) => {
   return (
     <>
       <div style={styles.videoContainer}>
-        <video id="msr-video-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
+        <video id="camera-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
       </div>
     </>
   )

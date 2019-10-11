@@ -16,6 +16,7 @@ import LoadingIndicator from './view/LoadingIndicator'
 import NumPadKeyboard from './view/NumPadKeyboard'
 import QRCode from './view/QRCode'
 import SaveButton from './buttons/SaveButton'
+import RetryButton from './buttons/RetryButton'
 import ScanQRButton from './buttons/ScanQRButton'
 import Section from './layout/Section'
 import Text from './view/Text'
@@ -43,6 +44,7 @@ export {
   NumPadKeyboard,
   QRCode,
   SaveButton,
+  RetryButton,
   ScanQRButton,
   Section,
   Text,

@@ -7,7 +7,7 @@ import React, { createRef } from 'react'
 import type { DashboardProps } from '../../dashboard/Dashboard'
 
 import logger from '../../../lib/logger/pino-logger'
-import { SaveButton, Section, Wrapper } from '../../common'
+import { RetryButton, SaveButton, Section, Wrapper } from '../../common'
 
 // import { fireEvent } from '../../../lib/analytics/analytics'
 
@@ -127,6 +127,10 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
     log.debug(photo)
   }
 
+  retry = () => {
+    this.setState({ photo: null, photoURL: null })
+  }
+
   render() {
     const { showMsrCapture } = this.state
     return (
@@ -152,7 +156,14 @@ class TakePhotoClass extends React.Component<TakePhotoProps, State> {
             />
           )}
           <Section.Row>
-            <SaveButton onPress={() => this.done(this.state.photo)} />
+            <SaveButton onPress={() => this.done(this.state.video)} />
+          </Section.Row>
+          <br />
+          <br />
+          <br />
+
+          <Section.Row>
+            <RetryButton onPress={this.retry} />
           </Section.Row>
         </Section>
       </Wrapper>
