@@ -13,15 +13,9 @@ import takeWhile from 'lodash/takeWhile'
 import toPairs from 'lodash/toPairs'
 import values from 'lodash/values'
 import isEmail from 'validator/lib/isEmail'
-<<<<<<< HEAD
 import Config from '../../config/config'
 import API from '../API/api'
 import _ from 'lodash'
-=======
-import Mutex from 'await-mutex'
-
-// import _ from 'lodash'
->>>>>>> changes, add debugger
 import isMobilePhone from '../validators/isMobilePhone'
 
 // import validateSocialPosts from '../validators/validateSocialPosts'
