@@ -15,6 +15,7 @@ import values from 'lodash/values'
 import isEmail from 'validator/lib/isEmail'
 import Config from '../../config/config'
 import API from '../API/api'
+
 // import _ from 'lodash'
 
 // import validateSocialPosts from '../validators/validateSocialPosts'
@@ -62,6 +63,8 @@ export type GunDBUser = {
  * possible privacy level for profile fields
  */
 type FieldPrivacy = 'private' | 'public' | 'masked'
+
+type SubgraphPrivacy = 'private' | 'public'
 
 type ACK = {
   ok: number,
@@ -171,6 +174,9 @@ export const getOperationType = (data: any, account: string) => {
   const operationType = data.from && data.from.toLowerCase() === account ? 'send' : 'receive'
   return EVENT_TYPES[data.name] || operationType
 }
+
+const metaNodes = ['privacy', 'display', 'value']
+const subgraphNodes = ['socialPosts', 'uploads']
 
 /**
  * Users gundb to handle user storage.
@@ -734,85 +740,6 @@ export class UserStorage {
     })
   }
 
-  // setSocialPosts(socialPosts, update: boolean = false): Promise<> {
-  //   if (profile && !profile.validate) {
-  //     profile = getUserModel(profile)
-  //   }
-  //   const errors = userModelValidations.socialPosts(socialPosts
-  //   if (!isValid) {
-  //     logger.error('setProfile failed:', { errors })
-  //     if (Config.throwSaveProfileErrors) {
-  //       return Promise.reject(errors)
-  //     }
-  //   }
-
-  //   const profileSettings = {
-  //     fullName: { defaultPrivacy: 'public' },
-  //     email: { defaultPrivacy: 'private' },
-  //     mobile: { defaultPrivacy: 'private' },
-  //     avatar: { defaultPrivacy: 'public' },
-  //     walletAddress: { defaultPrivacy: 'public' },
-  //     username: { defaultPrivacy: 'public' },
-  //     w3Token: { defaultPrivacy: 'private' },
-  //     loginToken: { defaultPrivacy: 'private' },
-  //   }
-  //   const getPrivacy = async field => {
-  //     const currentPrivacy = await this.profile.get(field).get('privacy')
-  //     return currentPrivacy || profileSettings[field].defaultPrivacy || 'public'
-  //   }
-  //   return Promise.all(
-  //     keys(profileSettings)
-  //       .filter(key => profile[key])
-  //       .map(async field => {
-  //         return this.setProfileField(field, profile[field], await getPrivacy(field)).catch(e => {
-  //           logger.error('setProfile field failed:', { field }, e.message, e)
-  //           return { err: `failed saving field ${field}` }
-  //         })
-  //       })
-  //   ).then(results => {
-  //     const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
-  //     if (errors.length > 0) {
-  //       logger.error('setProfile some fields failed', errors.length, errors, JSON.stringify(errors))
-  //       if (Config.throwSaveProfileErrors) {
-  //         return Promise.reject(errors)
-  //       }
-  //     }
-  //     return true
-  //   })
-  // }
-
-  // async setSocialPosts(socialPosts: SocialPostsRecord, update: boolean = false): Promise<> {
-  //   const socialPostErrors = await validateSocialPosts(socialPosts)
-  //   if (socialPostErrors !== {}) {
-  //     logger.error('setProfile failed:', {})
-  //     if (Config.throwSaveProfileErrors) {
-  //       return Promise.reject(socialPostErrors)
-  //     }
-  //   }
-
-  //   const socialPostPrivacy = 'public'
-
-  //   const getPrivacy = async () => {
-  //     const currentPrivacy = await this.profile.get('socialPosts').get('privacy')
-  //     return currentPrivacy || socialPostPrivacy || 'public'
-  //   }
-  //   return Promise.resolve(async () => {
-  //     return this.setProfileField('socialPosts', socialPosts, await getPrivacy()).catch(e => {
-  //       logger.error('setSocialPosts failed:', '', e.message, e)
-  //       return { err: `failed saving field` }
-  //     })
-  //   }).then(results => {
-  //     const errors = results.filter(ack => ack && ack.err).map(ack => ack.err)
-  //     if (errors.length > 0) {
-  //       logger.error('setSocialPosts failed', errors.length, errors, JSON.stringify(errors))
-  //       if (Config.throwSaveProfileErrors) {
-  //         return Promise.reject(errors)
-  //       }
-  //     }
-  //     return true
-  //   })
-  // }
-
   /**
    *
    * @param {string} field
@@ -922,6 +849,109 @@ export class UserStorage {
         privacy,
       }),
     ])
+  }
+
+  async setSubgraphPrivacy(subgraphName: string, privacy: SubgraphPrivacy) {
+    const subgraphNode = this.profile.get(subgraphName)
+    const currentPrivacy = await subgraphNode.get('privacy')
+    if (currentPrivacy === privacy) {
+      return Promise.resolve(true)
+    }
+    const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+    if (privacy === 'public') {
+      const displayObj = _.transform(
+        keys(subgraphValue),
+        (acc, key) => {
+          acc[key] = '******'
+        },
+        {}
+      )
+      return Promise.race([
+        subgraphNode.get('display').putAck(JSON.stringify(displayObj)),
+        subgraphNode.get('privacy').putAck('public'),
+      ])
+    } else if (privacy === 'private') {
+      return Promise.race([subgraphNode.get('display').putAck(null), subgraphNode.get('privacy').putAck('private')])
+    }
+  }
+
+  async setSubgraphField(
+    subgraphName: string,
+    field: string,
+    value: string,
+    privacy: FieldPrivacy = 'public'
+  ): Promise<ACK> {
+    let display
+    switch (privacy) {
+      case 'private':
+        display = '******'
+        break
+      case 'masked':
+        display = UserStorage.maskField(field, value)
+
+        //undo invalid masked field
+        if (display === value) {
+          privacy = 'public'
+        }
+        break
+      case 'public':
+        display = value
+        break
+      default:
+        throw new Error('Invalid privacy setting', { privacy })
+    }
+    const subgraphPromises = []
+    const subgraphNode = this.profile.get(subgraphName)
+    const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+    const subgraphPrivacy = await subgraphNode.get('privacy')
+    subgraphPromises.push(subgraphNode.get('value').secretAck(JSON.stringify({ ...subgraphValue, [field]: value })))
+
+    if (subgraphPrivacy === 'public') {
+      const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
+      subgraphPromises.push(
+        subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
+      )
+    }
+
+    return Promise.race(subgraphPromises)
+  }
+
+  async setSubgraphFieldPrivacy(subgraphName: string, field: string, privacy: SubgraphPrivacy) {
+    const subgraphNode = this.profile.get(subgraphName)
+    const subgraphPrivacy = await subgraphNode.get('privacy')
+    if (subgraphPrivacy === 'private') {
+      throw new Error('Subgraph ' + subgraphName + ' privacy set to private, cannot alter subgraph field privacy')
+    } else {
+      let display
+      const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+      const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
+      const value = subgraphValue[field]
+      switch (privacy) {
+        case 'private':
+          display = '******'
+          break
+        case 'masked':
+          display = UserStorage.maskField(field, value)
+
+          //undo invalid masked field
+          if (display === value) {
+            privacy = 'public'
+          }
+          break
+        case 'public':
+          display = value
+          break
+        default:
+          throw new Error('Invalid privacy setting', { privacy })
+      }
+      return subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
+    }
+  }
+
+  async getSubgraphValue(subgraphName: string) {
+    const subgraphNode = this.profile.get(subgraphName)
+    const result = await subgraphNode.get('value').decrypt()
+    return result
   }
 
   /**
