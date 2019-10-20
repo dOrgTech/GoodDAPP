@@ -64,7 +64,7 @@ export type GunDBUser = {
  */
 type FieldPrivacy = 'private' | 'public' | 'masked'
 
-type SubgraphPrivacy = 'private' | 'public'
+// type SubgraphPrivacy = 'private' | 'public'
 
 type ACK = {
   ok: number,
@@ -175,8 +175,8 @@ export const getOperationType = (data: any, account: string) => {
   return EVENT_TYPES[data.name] || operationType
 }
 
-const metaNodes = ['privacy', 'display', 'value']
-const subgraphNodes = ['socialPosts', 'uploads']
+// const metaNodes = ['privacy', 'display', 'value']
+// const subgraphNodes = ['socialPosts', 'uploads']
 
 /**
  * Users gundb to handle user storage.
@@ -208,6 +208,12 @@ export class UserStorage {
    * @instance {Gun}
    */
   profile: Gun
+
+  /**
+   * a gun node refering to gun.user().get('identity')
+   * @instance {Gun}
+   */
+  identity: Gun
 
   /**
    * a gun node refering to gun.user().get('feed')
@@ -400,6 +406,7 @@ export class UserStorage {
       }
       this.user = this.gunuser.is
       this.profile = this.gunuser.get('profile')
+      this.identity = this.gunuser.get('identity')
       this.profile.open(doc => {
         this._lastProfileUpdate = doc
         this.subscribersProfileUpdates.forEach(callback => callback(doc))
@@ -851,108 +858,138 @@ export class UserStorage {
     ])
   }
 
-  async setSubgraphPrivacy(subgraphName: string, privacy: SubgraphPrivacy) {
-    const subgraphNode = this.profile.get(subgraphName)
-    const currentPrivacy = await subgraphNode.get('privacy')
-    if (currentPrivacy === privacy) {
-      return Promise.resolve(true)
-    }
-    const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-    if (privacy === 'public') {
-      const displayObj = _.transform(
-        keys(subgraphValue),
-        (acc, key) => {
-          acc[key] = '******'
-        },
-        {}
-      )
-      return Promise.race([
-        subgraphNode.get('display').putAck(JSON.stringify(displayObj)),
-        subgraphNode.get('privacy').putAck('public'),
-      ])
-    } else if (privacy === 'private') {
-      return Promise.race([subgraphNode.get('display').putAck(null), subgraphNode.get('privacy').putAck('private')])
-    }
-  }
+  // async setSubgraphPrivacy(subgraphNode: Gun, privacy: SubgraphPrivacy) {
+  //   const currentPrivacy = await subgraphNode.get('privacy')
+  //   if (currentPrivacy === privacy) {
+  //     return Promise.resolve(true)
+  //   }
+  //   const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+  //   if (privacy === 'public') {
+  //     const displayObj = _.transform(
+  //       keys(subgraphValue),
+  //       (acc, key) => {
+  //         acc[key] = '******'
+  //       },
+  //       {}
+  //     )
+  //     return Promise.race([
+  //       subgraphNode.get('display').putAck(JSON.stringify(displayObj)),
+  //       subgraphNode.get('privacy').putAck('public'),
+  //     ])
+  //   } else if (privacy === 'private') {
+  //     return Promise.race([subgraphNode.get('display').putAck(null), subgraphNode.get('privacy').putAck('private')])
+  //   }
+  // }
 
-  async setSubgraphField(
-    subgraphName: string,
-    field: string,
-    value: string,
-    privacy: FieldPrivacy = 'public'
-  ): Promise<ACK> {
-    let display
-    switch (privacy) {
-      case 'private':
-        display = '******'
-        break
-      case 'masked':
-        display = UserStorage.maskField(field, value)
+  // async setSubgraphField(
+  //   subgraphNode: Gun,
+  //   field: string,
+  //   value: string,
+  //   privacy: FieldPrivacy = 'public'
+  // ): Promise<ACK> {
+  //   let display
+  //   switch (privacy) {
+  //     case 'private':
+  //       display = '******'
+  //       break
+  //     case 'masked':
+  //       display = UserStorage.maskField(field, value)
 
-        //undo invalid masked field
-        if (display === value) {
-          privacy = 'public'
-        }
-        break
-      case 'public':
-        display = value
-        break
-      default:
-        throw new Error('Invalid privacy setting', { privacy })
-    }
-    const subgraphPromises = []
-    const subgraphNode = this.profile.get(subgraphName)
-    const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-    const subgraphPrivacy = await subgraphNode.get('privacy')
-    subgraphPromises.push(subgraphNode.get('value').secretAck(JSON.stringify({ ...subgraphValue, [field]: value })))
+  //       //undo invalid masked field
+  //       if (display === value) {
+  //         privacy = 'public'
+  //       }
+  //       break
+  //     case 'public':
+  //       display = value
+  //       break
+  //     default:
+  //       throw new Error('Invalid privacy setting', { privacy })
+  //   }
+  //   const subgraphPromises = []
+  //   const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+  //   const subgraphPrivacy = await subgraphNode.get('privacy')
+  //   subgraphPromises.push(subgraphNode.get('value').secretAck(JSON.stringify({ ...subgraphValue, [field]: value })))
 
-    if (subgraphPrivacy === 'public') {
-      const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
-      subgraphPromises.push(
-        subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
-      )
-    }
+  //   if (subgraphPrivacy === 'public') {
+  //     const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
+  //     subgraphPromises.push(
+  //       subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
+  //     )
+  //   }
 
-    return Promise.race(subgraphPromises)
-  }
+  //   return Promise.race(subgraphPromises)
+  // }
 
-  async setSubgraphFieldPrivacy(subgraphName: string, field: string, privacy: SubgraphPrivacy) {
-    const subgraphNode = this.profile.get(subgraphName)
-    const subgraphPrivacy = await subgraphNode.get('privacy')
-    if (subgraphPrivacy === 'private') {
-      throw new Error('Subgraph ' + subgraphName + ' privacy set to private, cannot alter subgraph field privacy')
-    } else {
-      let display
-      const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-      const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
-      const value = subgraphValue[field]
-      switch (privacy) {
-        case 'private':
-          display = '******'
-          break
-        case 'masked':
-          display = UserStorage.maskField(field, value)
+  // async setUploadsField(field, entry, privacy: { hash: SubgraphPrivacy, data: SubraphPrivacy }) {
+  //   if (_.isEqual(keys(entry), ['hash', 'data'])) {
+  //     const uploadsNode = this.identity.get('uploads')
+  //     const uploadsPrivacy = await uploadsNode.get('privacy')
+  //     if (uploadsPrivacy === 'public') {
+  //       const uploadsPromises = []
+  //       const uploadNode = uploadsNode.get(field)
+  //       keys(entry).forEach(x => {
+  //         uploadsPromises.push(this.setSubgraphField(uploadNode, x, entry[x], privacy[x]))
+  //       })
+  //       return this.setSubgraphField(uploadsNode, field, entry, privacy)
+  //     } else if (uploadsPrivacy === 'private') {
+  //       const uploadsValue = { ...JSON.parse(await uploadsNode.get('value').decrypt()), [field]: entry }
+  //       return this.setSubgraphField(uploadsPrivacy, uploadsValue, 'private')
+  //     }
+  //   }
+  //   throw new Error('invalid entry')
+  // }
 
-          //undo invalid masked field
-          if (display === value) {
-            privacy = 'public'
-          }
-          break
-        case 'public':
-          display = value
-          break
-        default:
-          throw new Error('Invalid privacy setting', { privacy })
-      }
-      return subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
-    }
-  }
+  // async setSocialPostsField(field, entry, privacy: SubgraphPrivacy) {
+  //   if (_.includes(['github', 'twitter'], field)) {
+  //     const socialPostsNode = this.identity.get('socialPosts')
+  //     return this.setSubgraphField(socialPostsNode, field, entry, privacy)
+  //   }
+  //   throw new Error('invalid entry')
+  // }
 
-  async getSubgraphValue(subgraphName: string) {
-    const subgraphNode = this.profile.get(subgraphName)
-    const result = await subgraphNode.get('value').decrypt()
-    return result
-  }
+  // async setSocialPostsPrivacy(privacy: SubgraphPrivacy) {
+  //   const uploadsNode = this.identity.get('socialPosts')
+
+  //   set
+  // }
+
+  // async setSubgraphFieldPrivacy(subgraphNode: Gun, field: string, privacy: SubgraphPrivacy) {
+  //   const subgraphPrivacy = await subgraphNode.get('privacy')
+  //   if (subgraphPrivacy === 'private') {
+  //     throw new Error('Subgraph ' + subgraphName + ' privacy set to private, cannot alter subgraph field privacy')
+  //   } else {
+  //     let display
+  //     const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
+  //     const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
+  //     const value = subgraphValue[field]
+  //     switch (privacy) {
+  //       case 'private':
+  //         display = '******'
+  //         break
+  //       case 'masked':
+  //         display = UserStorage.maskField(field, value)
+
+  //         //undo invalid masked field
+  //         if (display === value) {
+  //           privacy = 'public'
+  //         }
+  //         break
+  //       case 'public':
+  //         display = value
+  //         break
+  //       default:
+  //         throw new Error('Invalid privacy setting', { privacy })
+  //     }
+  //     return subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
+  //   }
+  // }
+
+  // async getSubgraphValue(subgraphName: string) {
+  //   const subgraphNode = this.profile.get(subgraphName)
+  //   const result = await subgraphNode.get('value').decrypt()
+  //   return result
+  // }
 
   /**
    * Generates index by field if privacy is public, or empty index if it's not public
@@ -1607,6 +1644,14 @@ export class UserStorage {
         res(undefined)
       }
     })
+  }
+
+  get userprofile() {
+    return this.profile
+  }
+
+  get useridentity() {
+    return this.identity
   }
 
   getEncryptedProfile(profileNode): Promise<> {
