@@ -13,10 +13,9 @@ import takeWhile from 'lodash/takeWhile'
 import toPairs from 'lodash/toPairs'
 import values from 'lodash/values'
 import isEmail from 'validator/lib/isEmail'
+import _ from 'lodash'
 import Config from '../../config/config'
 import API from '../API/api'
-
-// import _ from 'lodash'
 
 // import validateSocialPosts from '../validators/validateSocialPosts'
 import pino from '../logger/pino-logger'
@@ -28,6 +27,22 @@ const logger = pino.child({ from: 'UserStorage' })
 
 function isValidDate(d) {
   return d instanceof Date && !isNaN(d)
+}
+
+function isObj(item) {
+  item = typeof item !== 'string' ? JSON.stringify(item) : item
+
+  try {
+    item = JSON.parse(item)
+  } catch (e) {
+    return false
+  }
+
+  if (typeof item === 'object' && item !== null) {
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -858,138 +873,367 @@ export class UserStorage {
     ])
   }
 
-  // async setSubgraphPrivacy(subgraphNode: Gun, privacy: SubgraphPrivacy) {
-  //   const currentPrivacy = await subgraphNode.get('privacy')
-  //   if (currentPrivacy === privacy) {
-  //     return Promise.resolve(true)
-  //   }
-  //   const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-  //   if (privacy === 'public') {
-  //     const displayObj = _.transform(
-  //       keys(subgraphValue),
-  //       (acc, key) => {
-  //         acc[key] = '******'
-  //       },
-  //       {}
-  //     )
-  //     return Promise.race([
-  //       subgraphNode.get('display').putAck(JSON.stringify(displayObj)),
-  //       subgraphNode.get('privacy').putAck('public'),
-  //     ])
-  //   } else if (privacy === 'private') {
-  //     return Promise.race([subgraphNode.get('display').putAck(null), subgraphNode.get('privacy').putAck('private')])
-  //   }
-  // }
+  /**
+   * Sets a subgraph path to private
+   *
+   * @param {Gun} subgraph - Subgraph to route a path from
+   * @param {string} fieldpath - Path to the route
+   * @param {SubgraphPrivacy} privacy - (private | public )
+   * @returns {Promise} Collection of promises to perform the action
+   */
+  async setSubgraphPathPrivacy(subgraph: Gun, fieldpath: string, privacy: SubgraphPrivacy) {
+    const destPaths = fieldpath.split('.')
+    const currentPrivacy = await subgraph.get('privacy')
+    let destNode = subgraph
+    let destNodePrivacy = currentPrivacy
 
-  // async setSubgraphField(
-  //   subgraphNode: Gun,
-  //   field: string,
-  //   value: string,
-  //   privacy: FieldPrivacy = 'public'
-  // ): Promise<ACK> {
-  //   let display
-  //   switch (privacy) {
-  //     case 'private':
-  //       display = '******'
-  //       break
-  //     case 'masked':
-  //       display = UserStorage.maskField(field, value)
+    // find end, trim off public part of path
+    while (destNodePrivacy == 'public' && destPaths.length > 0) {
+      destNode = destNode.get('value').get(destPaths.shift())
+      destNodePrivacy = await destNode.get('privacy')
+    }
+    const destNodeValue =
+      destNodePrivacy == 'private'
+        ? await destNode.get('value').decrypt()
+        : await this.loadGunField(destNode.get('value'))
 
-  //       //undo invalid masked field
-  //       if (display === value) {
-  //         privacy = 'public'
-  //       }
-  //       break
-  //     case 'public':
-  //       display = value
-  //       break
-  //     default:
-  //       throw new Error('Invalid privacy setting', { privacy })
-  //   }
-  //   const subgraphPromises = []
-  //   const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-  //   const subgraphPrivacy = await subgraphNode.get('privacy')
-  //   subgraphPromises.push(subgraphNode.get('value').secretAck(JSON.stringify({ ...subgraphValue, [field]: value })))
+    // destNodeValue will either be the loaded gun field (only in case of making private)
+    // or will be encrypted value (only in case of public)
+    if (destPaths.length === 0 && destNodePrivacy === privacy) {
+      return Promise.resolve(true)
+    }
 
-  //   if (subgraphPrivacy === 'public') {
-  //     const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
-  //     subgraphPromises.push(
-  //       subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
-  //     )
-  //   }
+    if (privacy === 'public') {
+      // the general pattern of this case is to unpack the private node, setting all children
+      // of each node in the path to private, except the next node in the path
+      // the mutations are ordered from the top secret node down, as one is carving out
+      // a new part of the graph below the secret node
+      if (destPaths.length === 0) {
+        // end of path is a private value
+        // clear node, set self to public, create children as private if obj, else set value
+        const subgraphValue = destNodeValue
+        if (isObj(destNodeValue)) {
+          return Promise.all([
+            destNode.get('privacy').put('public'),
+            destNode
+              .get('value')
+              .putAck(null)
+              .then((...args) => {
+                return destNode
+                  .get('value')
+                  .putAck({})
+                  .then((...args) => {
+                    const subgraphPromises = []
+                    keys(subgraphValue).forEach(key => {
+                      subgraphPromises.push(
+                        destNode
+                          .get('value')
+                          .get(key)
+                          .get('privacy')
+                          .putAck('private')
+                      )
+                      subgraphPromises.push(
+                        destNode
+                          .get('value')
+                          .get(key)
+                          .get('value')
+                          .secretAck(subgraphValue[key])
+                      )
+                    })
+                    return Promise.all(subgraphPromises)
+                  })
+              }),
+          ])
+        }
+        return Promise.all([
+          destNode.get('privacy').put('public'),
+          destNode
+            .get('value')
+            .put(null)
+            .then(() => destNode.get('value').put(destNodeValue)),
+        ])
+      }
+      if (!_.has(destNodeValue, destPaths.join('.'))) {
+        // checks that destination is in the encrypted node
+        throw new Error('path not found')
+      }
+      let currentNode = destNode
+      let currentValue = destNodeValue
+      let subgraphPromise
+      {
+        // we bracket to create a closed scope for key (maybe unnecessary)
+        const key = destNode[0]
+        subgraphPromise = Promise.all([
+          currentNode.get('privacy').put('public'),
+          currentNode
+            .get('value')
+            .put(null)
+            .then(() =>
+              currentNode
+                .get('value')
+                .put({})
+                .then(() => {
+                  const promises = []
+                  _.difference(keys(currentValue), [key]).forEach(key0 => {
+                    promises.push(
+                      currentNode
+                        .get('value')
+                        .get(key0)
+                        .get('privacy')
+                        .put('private'),
+                      currentNode
+                        .get('value')
+                        .get(key0)
+                        .get('value')
+                        .secretAck(currentValue[key0])
+                    )
+                  })
+                  return Promise.all(promises)
+                })
+            ),
+        ])
+      }
+      while (destPaths.length > 0) {
+        const key = destPaths.shift()
+        currentValue = currentValue[key]
+        currentNode = currentNode.get('value').get(key)
 
-  //   return Promise.race(subgraphPromises)
-  // }
+        // create constant reference for promises
+        const node = currentNode
+        const value = currentValue
+        if (isObj(currentValue)) {
+          // as with above pattern, we empty out the node, turn it into an object, and then
+          // put it to private with the newly encrypted value, chained to the previous promise
+          subgraphPromise = subgraphPromise.then(() =>
+            Promise.all([
+              node.get('privacy').put('public'),
+              node
+                .get('value')
+                .put(null)
+                .then(() =>
+                  node
+                    .get('value')
+                    .put({})
+                    .then(() => {
+                      const promises = []
+                      _.difference(keys(value), [key]).forEach(key0 => {
+                        promises.push(
+                          node
+                            .get('value')
+                            .get(key0)
+                            .get('privacy')
+                            .put('private'),
+                          node
+                            .get('value')
+                            .get(key0)
+                            .get('value')
+                            .secretAck(value[key0])
+                        )
+                      })
+                      return Promise.all(promises)
+                    })
+                ),
+            ])
+          )
+        } else {
+          if (destPaths.length > 0) {
+            throw new Error('unknown')
+          }
+          subgraphPromise = subgraphPromise.then(() =>
+            Promise.all([node.get('privacy').put('public'), node.get('value').put(value)])
+          )
+        }
+      }
+      return subgraphPromise
+    } else if (privacy == 'private') {
+      // the general pattern of this case uses a layered stack of keys
+      // with an index array denoting the position of the key for that part of the path
+      // in each layer.
+      // when one reaches a nonobject bottom, one either pops right
+      // to the next node in the layer, or crawls to the least numbered
+      // layer which has been completed, chaining the promises of the higher numbered layers
+      // behind the promises of the preceding ones.
+      // the ordering here is such that we can nullify constituent nodes,
+      // specifically marking them for deletion when garbage collection is implemented
+      const layers = [[]]
+      const indexPath = []
+      const outVal = {}
+      let promiseFuncs = [[]]
 
-  // async setUploadsField(field, entry, privacy: { hash: SubgraphPrivacy, data: SubraphPrivacy }) {
-  //   if (_.isEqual(keys(entry), ['hash', 'data'])) {
-  //     const uploadsNode = this.identity.get('uploads')
-  //     const uploadsPrivacy = await uploadsNode.get('privacy')
-  //     if (uploadsPrivacy === 'public') {
-  //       const uploadsPromises = []
-  //       const uploadNode = uploadsNode.get(field)
-  //       keys(entry).forEach(x => {
-  //         uploadsPromises.push(this.setSubgraphField(uploadNode, x, entry[x], privacy[x]))
-  //       })
-  //       return this.setSubgraphField(uploadsNode, field, entry, privacy)
-  //     } else if (uploadsPrivacy === 'private') {
-  //       const uploadsValue = { ...JSON.parse(await uploadsNode.get('value').decrypt()), [field]: entry }
-  //       return this.setSubgraphField(uploadsPrivacy, uploadsValue, 'private')
-  //     }
-  //   }
-  //   throw new Error('invalid entry')
-  // }
+      // const uuids = []
+      // initially populate layers, indexpath. decrypt if private and done
+      // make nodes lower private if obj
+      if (isObj(destNodeValue)) {
+        const topKeys = keys(destNodeValue)
+        topKeys.forEach(x => (outVal[x] = undefined))
+        layers[0].push(...topKeys)
+        indexPath.push(0)
+      } else {
+        return Promise.all([
+          destNode
+            .get('value')
+            .put(null)
+            .then(() => destNode.secretAck(destNodeValue)),
+          destNode.get('privacy').put('private'),
+        ])
+      }
+      while (indexPath.length > 0) {
+        const paths = []
+        for (let i = 0; i < indexPath.length; i++) {
+          paths.push(layers[i][indexPath[i]])
+        }
+        const curDepth = indexPath.length - 1
 
-  // async setSocialPostsField(field, entry, privacy: SubgraphPrivacy) {
-  //   if (_.includes(['github', 'twitter'], field)) {
-  //     const socialPostsNode = this.identity.get('socialPosts')
-  //     return this.setSubgraphField(socialPostsNode, field, entry, privacy)
-  //   }
-  //   throw new Error('invalid entry')
-  // }
+        // const curIndex = indexPath[curDepth]
+        // for addressing destnode value
+        // for addressing outval
+        const pathValue = paths.join('.')
+        const pathNode = paths.join('.value.')
+        const curNodeValue = _.get(destNodeValue, pathNode)
+        const curNodePrivacy = curNodeValue.privacy
+        const curNode = _.reduce(paths, (acc, val) => acc.get('value').get(val), destNode)
+        let fieldVal
+        if (curNodePrivacy == 'public') {
+          fieldVal = curNodeValue.value
 
-  // async setSocialPostsPrivacy(privacy: SubgraphPrivacy) {
-  //   const uploadsNode = this.identity.get('socialPosts')
+          // object - push keys to the next layer, up the index, populate the keys in
+          // the output object, and record the uuids for nullifying later
+          // can maybe not use loadGunField so we have the '#' field in destNodeValue
+          // but maybe will need more modifcations elsewhere
+          if (isObj(fieldVal)) {
+            const curKeys = keys(fieldVal)
+            layers.push(curKeys)
+            indexPath.push(0)
+            promiseFuncs.push([])
+            _.set(outVal, pathValue, _.transform(curKeys, (acc, el) => (acc[el] = undefined), {}))
 
-  //   set
-  // }
+            promiseFuncs[indexPath.length - 1].push(() =>
+              Promise.all([curNode.get('value').put(null), curNode.get('privacy').put(null)]).then(() =>
+                curNode.put(null)
+              )
+            )
+            continue
+          } else {
+            _.set(outVal, pathValue, fieldVal)
+            promiseFuncs[indexPath.length - 1].push(() =>
+              Promise.all([curNode.get('value').put(null), curNode.get('privacy').put(null)]).then(() =>
+                curNode.put(null)
+              )
+            )
+          }
 
-  // async setSubgraphFieldPrivacy(subgraphNode: Gun, field: string, privacy: SubgraphPrivacy) {
-  //   const subgraphPrivacy = await subgraphNode.get('privacy')
-  //   if (subgraphPrivacy === 'private') {
-  //     throw new Error('Subgraph ' + subgraphName + ' privacy set to private, cannot alter subgraph field privacy')
-  //   } else {
-  //     let display
-  //     const subgraphValue = JSON.parse(await subgraphNode.get('value').decrypt())
-  //     const subgraphDisplay = JSON.parse(await subgraphNode.get('display'))
-  //     const value = subgraphValue[field]
-  //     switch (privacy) {
-  //       case 'private':
-  //         display = '******'
-  //         break
-  //       case 'masked':
-  //         display = UserStorage.maskField(field, value)
+          // curNode = destNode.path(paths.join('.'))
+        } else if (curNodePrivacy === 'private') {
+          fieldVal = await curNode.get('value').decrypt()
+          _.set(outVal, pathValue, fieldVal)
+          promiseFuncs[indexPath.length - 1].push(() =>
+            Promise.all([curNode.get('value').put(null), curNode.get('privacy').put(null)]).then(() =>
+              curNode.put(null)
+            )
+          )
+        }
 
-  //         //undo invalid masked field
-  //         if (display === value) {
-  //           privacy = 'public'
-  //         }
-  //         break
-  //       case 'public':
-  //         display = value
-  //         break
-  //       default:
-  //         throw new Error('Invalid privacy setting', { privacy })
-  //     }
-  //     return subgraphNode.get('display').secretAck(JSON.stringify({ ...subgraphDisplay, [field]: display }))
-  //   }
-  // }
+        //}
+        // cases where we step back and right in indexPath
+        // the loop checks if we have yet to finish a layer and moves right if so,
+        // it checks if we have finished a layer and should move back
+        // it loops until we reach a lower index which is less than its layer's length
+        // if none is found, we will clear our layers and indexpath arrays
+        if (curNodePrivacy === 'private' || !isObj(fieldVal)) {
+          const parentIndex = indexPath[curDepth - 1]
+          for (let i = curDepth; i >= 0; i--) {
+            // the deepest index has exhausted the values of the layer, step back
+            if (i == layers.length - 1 && indexPath[i] === layers[i].length - 1) {
+              if (i > 0) {
+                const childPromiseFuncs = promiseFuncs.pop()
+                const parentPromiseFunc = promiseFuncs[i - 1][parentIndex]
+                promiseFuncs[i - 1][parentIndex] = () =>
+                  Promise.all(childPromiseFuncs.map(x => x())).then(parentPromiseFunc)
+              }
+              indexPath.pop()
+              layers.pop()
+            } else {
+              // deepest index has not exhausted values of the layer, step right
+              indexPath[i]++
+              break
+            }
+          }
+        }
+      }
 
-  // async getSubgraphValue(subgraphName: string) {
-  //   const subgraphNode = this.profile.get(subgraphName)
-  //   const result = await subgraphNode.get('value').decrypt()
-  //   return result
-  // }
+      return Promise.all(promiseFuncs[0]).then(() =>
+        Promise.all([
+          destNode.get('privacy').put('private'),
+          destNode
+            .get('value')
+            .put(null)
+            .then(() => destNode.get('value').put({}))
+            .then(() => destNode.get('value').secretAck(outVal)),
+        ])
+      )
+    }
+  }
+
+  /**
+   * Gets the subgraph node from the path of another subgraph node
+   *
+   * @param {Gun} subgraph - Subgraph to route a path from
+   * @param {string} fieldpath - Path to the route
+   * @returns {Gun} subgraph node routed from path
+   */
+  async getSubgraphPathNode(subgraph: Gun, fieldpath: string) {
+    const paths = fieldpath.split('.')
+    const privacy = await subgraph.get('privacy')
+    let destNode = subgraph
+    let destNodePrivacy = privacy
+    isObj('foo')
+
+    // find end, trim off public part of path
+    while (destNodePrivacy == 'public' && paths.length > 0) {
+      destNode = destNode.get('value').get(paths.shift())
+      destNodePrivacy = await destNode.get('privacy')
+    }
+
+    if (destNodePrivacy === 'private') {
+      const subgraphValue = await destNode.get('value')
+      if (paths.length === 0) {
+        return subgraphValue
+      }
+      throw new Error('path is private')
+    } else if (destNodePrivacy === 'public') {
+      return destNode.get('value')
+    }
+  }
+
+  /**
+   * Gets the subgraph value from the path of another subgraph node
+   *
+   * @param {Gun} subgraph - Subgraph to route a path from
+   * @param {string} fieldpath - Path to the route
+   * @returns {obj} subgraphnode value from the routed path
+   */
+  async getSubgraphPath(subgraph: Gun, fieldpath: string) {
+    const paths = fieldpath.split('.')
+    const privacy = await subgraph.get('privacy')
+    let destNode = subgraph
+    let destNodePrivacy = privacy
+
+    // find end, trim off public part of path
+    while (destNodePrivacy == 'public' && paths.length > 0) {
+      destNode = destNode.get('value').get(paths.shift())
+      destNodePrivacy = await destNode.get('privacy')
+    }
+
+    if (destNodePrivacy === 'private') {
+      const subgraphValue = await destNode.get('value').decrypt()
+      if (paths.length === 0) {
+        return subgraphValue
+      }
+      return _.get(subgraphValue, paths.join('.'))
+    } else if (destNodePrivacy === 'public') {
+      return this.loadGunField(destNode.get('value'))
+    }
+  }
 
   /**
    * Generates index by field if privacy is public, or empty index if it's not public
