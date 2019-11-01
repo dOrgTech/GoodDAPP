@@ -78,23 +78,27 @@ class API {
       )
       this.client = await instance
       log.info('API ready', this.jwt)
+      if (Config.ignoreW3) {
+        const retNull = () => null
+        this.w3Client = { put: retNull, get: retNull, defaults: { headers: { common: {} } } }
+      } else {
+        let w3Instance: AxiosInstance = axios.create({
+          baseURL: Config.web3SiteUrl,
+          timeout: 30000,
+        })
+        w3Instance.interceptors.request.use(req => req, error => Promise.reject(error))
+        w3Instance.interceptors.response.use(
+          response => response.data,
+          error => {
+            if (error.response && error.response.data) {
+              return Promise.reject(error.response.data)
+            }
 
-      let w3Instance: AxiosInstance = axios.create({
-        baseURL: Config.web3SiteUrl,
-        timeout: 30000,
-      })
-      w3Instance.interceptors.request.use(req => req, error => Promise.reject(error))
-      w3Instance.interceptors.response.use(
-        response => response.data,
-        error => {
-          if (error.response && error.response.data) {
-            return Promise.reject(error.response.data)
+            return Promise.reject(error)
           }
-
-          return Promise.reject(error)
-        }
-      )
-      this.w3Client = await w3Instance
+        )
+        this.w3Client = await w3Instance
+      }
     }))
   }
 

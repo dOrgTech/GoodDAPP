@@ -31,11 +31,13 @@ const log = logger.child({ from: 'Auth' })
 
 class Auth extends React.Component<Props> {
   state = {
-    asGuest: false,
+    asGuest: config.ignoreW3,
   }
 
   async componentWillMount() {
-    await this.checkWeb3TokenAndPaymentCode()
+    if (!config.ignoreWeb3) {
+      await this.checkWeb3TokenAndPaymentCode()
+    }
   }
 
   checkWeb3TokenAndPaymentCode = async () => {

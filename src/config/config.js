@@ -29,6 +29,7 @@ const Config = {
   receiveUrl: process.env.REACT_APP_RECEIVE_URL || `${publicUrl}`,
   sendUrl: process.env.REACT_APP_SEND_URL || `${publicUrl}`,
   nextTimeClaim: process.env.REACT_APP_NEXT_TIME_CLAIM || 86400,
+  ignoreW3: process.env.REACT_APP_IGNORE_W3_PROCESS === 'true',
   ethereum: {
     '42': {
       network_id: 42,

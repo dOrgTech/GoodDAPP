@@ -98,6 +98,7 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
     const web3Token = await AsyncStorage.getItem('web3Token')
 
     if (!web3Token) {
+      log.debug('no web3 token')
       setLoading(false)
       return
     }
@@ -189,7 +190,11 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
   }
 
   useEffect(() => {
-    isRegisterAllowed()
+    if (Config.ignoreW3) {
+      setRegisterAllowed(true)
+    } else {
+      isRegisterAllowed()
+    }
 
     //get user country code for phone
     getCountryCode()
@@ -215,17 +220,28 @@ const Signup = ({ navigation, screenProps }: { navigation: any, screenProps: any
     })()
 
     setReady(ready)
-
-    // don't allow to start sign up flow not from begining except when w3Token provided
-    AsyncStorage.getItem('web3Token').then(token => {
-      if (!token && navigation.state.index > 0) {
-        log.debug('redirecting to start, got index:', navigation.state.index)
-        setLoading(true)
-        return navigateWithFocus(navigation.state.routes[0].key)
+    if (Config.ignoreW3) {
+      const userScreenData = {
+        skipEmailConfirmation: true,
       }
-    })
+      setState({
+        ...state,
+        ...userScreenData,
+      })
 
-    checkWeb3Token()
+      navigation.navigate('Phone')
+    } else {
+      // don't allow to start sign up flow not from begining except when w3Token provided
+      AsyncStorage.getItem('web3Token').then(token => {
+        if (!token && navigation.state.index > 0) {
+          log.debug('redirecting to start, got index:', navigation.state.index)
+          setLoading(true)
+          return navigateWithFocus(navigation.state.routes[0].key)
+        }
+      })
+
+      checkWeb3Token()
+    }
   }, [])
 
   const finishRegistration = async () => {
