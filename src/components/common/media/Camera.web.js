@@ -2,6 +2,7 @@
 import { Dimensions } from 'react-native'
 import React, { createRef, useEffect } from 'react'
 import { isMobile } from 'mobile-device-detect'
+
 import logger from '../../../lib/logger/pino-logger'
 
 const log = logger.child({ from: 'Camera' })
@@ -11,6 +12,8 @@ type CameraProps = {
   height: number,
   onCameraLoad: (track: MediaStreamTrack) => Promise<void>,
   onError: (result: string) => void,
+
+  videoRef?: Boolean,
 }
 
 /**
@@ -44,11 +47,6 @@ const CameraComp = (props: CameraProps) => {
       return props.onError('Please make sure your mobile is in portrait mode and try again.')
     }
     awaitGetUserMedia()
-    return () => {
-      log.debug('Unloading video track?', !!this.videoTrack)
-      this.videoTrack && this.videoTrack.stop()
-      this.videoTrack = null
-    }
   }, [videoPlayerRef])
 
   const getStream = async (): Promise<MediaStream> => {
@@ -61,7 +59,7 @@ const CameraComp = (props: CameraProps) => {
         log.debug('getStream success:', device)
         return device
       } catch (e) {
-        log.warn('Failed getting stream', constraints, e)
+        log.error('Failed getting stream', constraints, e)
       }
     }
     let error =
@@ -74,7 +72,7 @@ const CameraComp = (props: CameraProps) => {
     videoElement: {
       ...getResponsiveVideoDimensions(),
 
-      /* REQUIRED - handle flipping of ZoOm interface.  users of selfie-style interfaces are trained to see their mirror image */
+      /* REQUIRED - handle flipping of camera interface.  users of selfie-style interfaces are trained to see their mirror image */
       transform: 'scaleX(-1)',
       overflow: 'hidden',
       justifySelf: 'center',
@@ -99,15 +97,16 @@ const CameraComp = (props: CameraProps) => {
         let error = 'No video player found'
         throw new Error(error)
       }
-      const videoTrack = stream.getVideoTracks()[0]
-      this.videoTrack = videoTrack
+      this.videoTrack = stream
       videoPlayerRef.current.srcObject = stream
-
+      log.debug('getusermedia')
+      log.debug(props)
       videoPlayerRef.current.addEventListener('play', () => {
-        props.onCameraLoad(videoTrack)
+        props.onCameraLoad(videoPlayerRef)
       })
+      log.debug('eventlistener done')
     } catch (e) {
-      log.error('getUserMedia failed:', e.message, e)
+      log.debug('getUserMedia failed:', e.message, e)
       props.onError(e)
     }
   }
@@ -115,11 +114,13 @@ const CameraComp = (props: CameraProps) => {
   return (
     <>
       <div style={styles.videoContainer}>
-        <video id="zoom-video-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
+        <video id="camera-element" autoPlay playsInline ref={videoPlayerRef} style={styles.videoElement} />
       </div>
     </>
   )
 }
+
+/* */
 
 export const Camera = React.memo(CameraComp)
 export const getResponsiveVideoDimensions = () => {
@@ -136,27 +137,5 @@ export const getResponsiveVideoDimensions = () => {
   return {
     height: height * 0.5,
     width: 'auto',
-  }
-}
-
-export const getResponsiveVideoDimensionsNew = () => {
-  const { width, height } = Dimensions.get('window')
-
-  //our max width is 475 and we have (10+5)*2 padding
-  const containerWidth = Math.min(475, width) - 30
-  const containerHeight = (containerWidth / 2) * 1.77777778
-
-  log.debug({ containerHeight, containerWidth })
-
-  //we transpose the video so height is width
-  if (height > containerWidth) {
-    return {
-      width: 'auto',
-      height: containerHeight,
-    }
-  }
-  return {
-    width: containerWidth,
-    height: 'auto',
   }
 }

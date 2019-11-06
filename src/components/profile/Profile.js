@@ -4,6 +4,14 @@ import GDStore from '../../lib/undux/GDStore'
 import { createStackNavigator } from '../appNavigation/stackNavigation'
 import { Section, UserAvatar, Wrapper } from '../common'
 import { withStyles } from '../../lib/styles'
+import AddIdentity from '../identity/AddIdentity'
+import AddIdentityMenu from '../identity/AddIdentityMenu'
+import AddHumanVerification from '../identity/AddHumanVerification'
+import AddPhotoId from '../identity/AddPhotoId'
+import GenericSocial from '../identity/GenericSocial'
+import IdentityDataTable from '../identity/IdentityDataTable'
+import TakePhoto from '../identity/media/TakePhoto.web'
+import TakeVideo from '../identity/media/TakeVideo.web'
 import EditAvatar from './EditAvatar'
 import EditProfile from './EditProfile'
 import ProfileDataTable from './ProfileDataTable'
@@ -39,6 +47,12 @@ const ProfileWrapper = props => {
           />
         </Section.Row>
         <ProfileDataTable profile={profile} />
+        <CircleButtonWrapper
+          iconName={'invite'}
+          iconSize={25}
+          onPress={() => screenProps.push('AddIdentityMenu')}
+          style={[styles.iconRight]}
+        />
       </Section>
     </Wrapper>
   )
@@ -68,4 +82,12 @@ export default createStackNavigator({
   EditAvatar,
   VerifyEdit,
   VerifyEditCode,
+  AddIdentity,
+  AddIdentityMenu,
+  AddHumanVerification,
+  AddPhotoId,
+  GenericSocial,
+  IdentityDataTable,
+  TakePhoto,
+  TakeVideo,
 })
