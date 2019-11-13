@@ -1,6 +1,7 @@
 // @flow
 import HDKey from 'hdkey'
 import Wallet from 'ethereumjs-wallet'
+import { addIdDaoAccount, getEnabledWeb3, setWeb3Provider } from '@dorgtech/id-dao-client'
 import logger from '../logger/pino-logger'
 
 type WalletsCollection = {
@@ -25,8 +26,10 @@ class MultipleAddressWallet {
     this.mnemonic = mnemonic
     this.addresses = []
     this.wallets = {}
+    setWeb3Provider('http://localhost:8545')
     this.initAccounts()
     this.wallet = this.wallets[this.addresses[0]]
+    global.iddaoweb3 = getEnabledWeb3
   }
 
   initAccounts() {
@@ -40,6 +43,12 @@ class MultipleAddressWallet {
       let address = wallet.getAddressString()
       this.addresses.push(address)
       this.wallets[address] = wallet
+      if (i == 0) {
+        getEnabledWeb3().then(() => {
+          global.iddaoweb3 = getEnabledWeb3()
+          return addIdDaoAccount('0x' + privateKeyBuffer.toString('hex'))
+        })
+      }
     }
   }
 }
