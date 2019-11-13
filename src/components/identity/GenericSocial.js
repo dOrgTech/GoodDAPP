@@ -6,12 +6,15 @@ import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 import { useScreenState } from '../appNavigation/stackNavigation'
 import { withStyles } from '../../lib/styles'
+import { useWrappedGoodWallet } from '../../lib/wallet/useWrappedWallet.js'
 import { displayNames, postNames } from './identities'
+
 import ShareButton from './ShareButton'
 
 const TITLE = 'Add Identity'
 
 const GenericSocial = ({ screenProps, theme, styles }) => {
+  const wallet = useWrappedGoodWallet()
   const [screenState] = useScreenState(screenProps)
 
   const { name, identity } = screenState
@@ -20,22 +23,19 @@ const GenericSocial = ({ screenProps, theme, styles }) => {
   const [post, setPost] = useState()
   const onChange = async url => {
     field.value = url
-    const f = false
-    if (f) {
-      const res = await field.validate()
-      if (res.hasError) {
-        setError(field.error)
-      } else {
-        setPost(field.value)
-        setError()
-      }
+    const res = await field.validate()
+    if (res.hasError) {
+      setError(field.error)
+    } else {
+      setPost(field.value)
+      setError()
     }
   }
   const onPress = () => {
     screenProps.pop({ identity })
   }
 
-  const verifyText = 'I am verifying my GoodDollar identity. 0xAb1235019238'
+  const verifyText = 'I am verifying my GoodDollar identity. ' + wallet.account
 
   return (
     <Wrapper>

@@ -3,15 +3,22 @@ import React from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
 
 import _ from 'lodash'
-import { IdentityDefinitionForm, serialize } from '@dorgtech/id-dao-client'
+import {
+  IdentityDefinitionForm,
+
+  //, serialize
+} from '@dorgtech/id-dao-client'
+import GDStore from '../../lib/undux/GDStore'
 import { withStyles } from '../../lib/styles'
 import { SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
-import GDStore from '../../lib/undux/GDStore'
+
+// import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
 import { useScreenState } from '../appNavigation/stackNavigation'
-import { useErrorDialog } from '../../lib/undux/utils/dialog'
 
+// import { useErrorDialog } from '../../lib/undux/utils/dialog'
+import { useWrappedGoodWallet } from '../../lib/wallet/useWrappedWallet.js'
 import logger from '../../lib/logger/pino-logger'
 import { displayNames } from './identities'
 const log = logger.child({ from: 'AddIdentityMenu' })
@@ -40,25 +47,24 @@ const IdentityView = ({ id, onPress, style, theme }) => (
 
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
+  const wallet = useWrappedGoodWallet()
   const store = GDStore.useStore()
   const profile = store.get('profile')
-  const [showErrorDialog] = useErrorDialog()
+
   const { identity: identityState } = screenState
   log.debug('id state', identityState)
   const identity: { form: IdentityDefinitionForm } = identityState
     ? identityState
     : { form: new IdentityDefinitionForm(), uploads: {} }
 
-  // identity.form.$.address.value = global.wallet.account
   log.debug('has address', _.get(identity, 'form.$.address.value'))
   if (_.get(identity, 'form.$.address.value') == '') {
-    // identity.form.$.address.value = global.wallet.account
-    identity.form.$.address.value = '0xfD0174784EbCe943bdb8832Ecdea9Fea30e7C7A9'
+    identity.form.$.address.value = wallet.account
+    identity.form.$.name.value = profile.fullName
+    log.debug(profile)
     log.debug('add address')
   }
   global.GDidentity = identity
-  log.debug(identity)
-  log.debug('has address2', _.has(identity, 'form.$.address.value'))
 
   // const identity = { ...storedIdentity }
   // Object.assign(identity)
@@ -119,22 +125,23 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   }
 
   const handleSave = async () => {
-    //const res = identity.validate()
-    identity.form.$.name.value = profile.fullName
-    identity.form.$.address.value = profile.walletAddress
-    const res = await identity.form.validate()
-    if (res.hasError) {
-      showErrorDialog(
-        _.transform(identity.form.$.socialPosts.$, (acc, val, key) => {
-          if (val.error) {
-            acc = acc + '\n' + val.error
-          }
-        })
-      )
-    } else {
-      const data = identity.form.data
-      API.proposeId(serialize(data))
-    }
+    // //const res = identity.validate()
+    // identity.form.$.name.value = profile.fullName
+    // identity.form.$.address.value = profile.walletAddress
+    // const res = await identity.form.validate()
+    // if (res.hasError) {
+    //   showErrorDialog(
+    //     _.transform(identity.form.$.socialPosts.$, (acc, val, key) => {
+    //       if (val.error) {
+    //         acc = acc + '\n' + val.error
+    //       }
+    //     })
+    //   )
+    // } else {
+    // const data = identity.form.data
+    API.proposeAdd({ form: identity.form.data, uploads: identity.uplaods })
+
+    // }
   }
   return (
     <Wrapper>

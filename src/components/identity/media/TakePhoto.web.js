@@ -177,13 +177,14 @@ const TakePhoto = ({ screenProps }) => {
   const { identity } = screenState
   log.debug('screenstate', screenState)
   const onDone = async photo => {
-    const photoBuf = new Buffer(await new Response(photo).arrayBuffer())
+    const response = await new Response(photo).arrayBuffer()
+    const photoBuf = Buffer.from(response)
     const mh = await multihashing(photoBuf, 'sha2-256')
     identity.form.$.uploads.$.selfie.data = {
       hash: CIDTool.format(mh),
       host: 'gun',
     }
-    identity.uploads.photo = photo
+    identity.uploads.selfie = photo
     screenProps.pop()
     screenProps.pop({ identity })
   }
