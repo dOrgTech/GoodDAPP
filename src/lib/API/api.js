@@ -1,13 +1,17 @@
 // @flow
 import axios from 'axios'
 import type { $AxiosXHR, AxiosInstance, AxiosPromise } from 'axios'
+import multihashing from 'multihashing-async'
+import CIDTool from 'cid-tool'
 import { AsyncStorage } from 'react-native'
+import { signPayload } from '@dorgtech/id-dao-client/dist/utils/web3Utils'
 import Config from '../../config/config'
 import { JWT } from '../constants/localStorage'
 import logger from '../logger/pino-logger'
 import type { NameRecord } from '../../components/signup/NameForm'
 import type { EmailRecord } from '../../components/signup/EmailForm'
 import type { MobileRecord } from '../../components/signup/PhoneForm.web'
+import goodWallet from '../wallet/GoodWallet'
 
 const log = logger.child({ from: 'API' })
 
@@ -86,7 +90,10 @@ class API {
           baseURL: Config.web3SiteUrl,
           timeout: 30000,
         })
-        w3Instance.interceptors.request.use(req => req, error => Promise.reject(error))
+        w3Instance.interceptors.request.use(
+          req => req,
+          error => Promise.reject(error)
+        )
         w3Instance.interceptors.response.use(
           response => response.data,
           error => {
@@ -100,6 +107,31 @@ class API {
         this.w3Client = await w3Instance
       }
     }))
+  }
+
+  async proposeAdd(identity) {
+    const req = new FormData()
+
+    // const [hash, message] = signPayload()
+    const identityString = JSON.stringify(identity.form)
+    req.append('form', identityString)
+    const identityHash = CIDTool.format(await multihashing(Buffer.from(identityString), 'sha2-256'))
+    req.append('hash', identityHash)
+    const sig = await signPayload(goodWallet.account, identityHash)
+    req.append('signature', sig)
+    Object.keys(identity.uploads).forEach(key => req.append(key, identity.uploads[key]))
+    return this.client
+      .post('/id-dao/propose-add', req, {
+        headers: {
+          'Content-Type': `multipart/form-data;`,
+        },
+      })
+      .then(r => {
+        if (r.data.onlyInEnv) {
+          return { data: { ok: 1, enrollResult: { alreadyEnrolled: true } } }
+        }
+        return r
+      })
   }
 
   /**
