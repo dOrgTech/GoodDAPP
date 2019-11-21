@@ -1,7 +1,6 @@
 // @flow
 import React from 'react'
 import { FlatList, TouchableOpacity } from 'react-native'
-
 import _ from 'lodash'
 import {
   IdentityDefinitionForm,
@@ -10,7 +9,7 @@ import {
 } from '@dorgtech/id-dao-client'
 import GDStore from '../../lib/undux/GDStore'
 import { withStyles } from '../../lib/styles'
-import { SaveButton, Section, Text, Wrapper } from '../common'
+import { BrandIcon, SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 
 // import GDStore from '../../lib/undux/GDStore'
@@ -20,6 +19,7 @@ import { useScreenState } from '../appNavigation/stackNavigation'
 // import { useErrorDialog } from '../../lib/undux/utils/dialog'
 import { useWrappedGoodWallet } from '../../lib/wallet/useWrappedWallet.js'
 import logger from '../../lib/logger/pino-logger'
+import RoundedClose from '../common/buttons/menu/RoundedClose'
 import { displayNames } from './identities'
 const log = logger.child({ from: 'AddIdentityMenu' })
 
@@ -41,6 +41,7 @@ const IdentityView = ({ id, onPress, style, theme }) => (
         iconSize={28}
         value={'Verify ' + id + ' identity'}
       />
+      <BrandIcon brand={id} />
     </Section.Row>
   </TouchableOpacity>
 )
@@ -120,9 +121,9 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     screenProps.push('TakeVideo', { from: 'AddIdentityMenu', identity })
   }
 
-  const handleVerifyPhotoId = () => {
-    screenProps.push('AddPhotoId', { from: 'AddIdentityMenu', identity })
-  }
+  // const handleVerifyPhotoId = () => {
+  //   screenProps.push('AddPhotoId', { from: 'AddIdentityMenu', identity })
+  // }
 
   const handleSave = async () => {
     // //const res = identity.validate()
@@ -139,7 +140,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     //   )
     // } else {
     // const data = identity.form.data
-    API.proposeAdd({ form: identity.form.data, uploads: identity.uplaods })
+    await API.proposeAdd({ form: identity.form.data, uploads: identity.uplaods })
 
     // }
   }
@@ -162,21 +163,13 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
           <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
             <InputRounded
               disabled={true}
-              icon={'send'}
+              icon={'camera'}
               iconColor={theme.colors.primary}
               iconSize={28}
               value={'Verify with video'}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhotoId}>
-            <InputRounded
-              disabled={true}
-              icon={'send'}
-              iconColor={theme.colors.primary}
-              iconSize={28}
-              value={'Verify your selfie'}
-            />
-          </TouchableOpacity>
+          <RoundedClose icon={'camera'} text={'Verify your selfie'} />
           <Section.Row style={styles.borderedBottomStyle}>
             <SaveButton onPress={handleSave} text="Submit Your Identity" />
           </Section.Row>

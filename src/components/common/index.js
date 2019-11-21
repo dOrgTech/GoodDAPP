@@ -4,6 +4,7 @@ import Avatar from './view/Avatar'
 import AwaitButton from './buttons/AwaitButton'
 import BigGoodDollar from './view/BigGoodDollar'
 import BigNumber from './view/BigNumber'
+import BrandIcon from './view/Icon/BrandIcon'
 import { Camera, getResponsiveVideoDimensions } from './media/Camera'
 import CaptureHelperWizard from './media/CaptureHelperWizard'
 import ClaimButton from './buttons/ClaimButton'
@@ -35,6 +36,7 @@ export {
   AwaitButton,
   BigGoodDollar,
   BigNumber,
+  BrandIcon,
   ButtonProps,
   Camera,
   CaptureHelperWizard,
