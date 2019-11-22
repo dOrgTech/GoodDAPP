@@ -29,7 +29,6 @@ class MultipleAddressWallet {
     setWeb3Provider('http://localhost:8545')
     this.initAccounts()
     this.wallet = this.wallets[this.addresses[0]]
-    global.iddaoweb3 = getEnabledWeb3
   }
 
   initAccounts() {
@@ -44,8 +43,8 @@ class MultipleAddressWallet {
       this.addresses.push(address)
       this.wallets[address] = wallet
       if (i == 0) {
-        getEnabledWeb3().then(() => {
-          global.iddaoweb3 = getEnabledWeb3()
+        getEnabledWeb3().then(web3 => {
+          global.iddaoweb3 = web3
           return addIdDaoAccount('0x' + privateKeyBuffer.toString('hex'))
         })
       }

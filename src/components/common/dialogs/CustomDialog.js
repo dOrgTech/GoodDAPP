@@ -43,6 +43,7 @@ export type DialogProps = {
 const CustomDialog = ({
   children = null,
   image,
+  noimage = false,
   loading = false,
   message = null,
   boldMessage = null,
@@ -80,7 +81,7 @@ const CustomDialog = ({
             {content || (
               <>
                 {children}
-                {image ? image : defaultImage}
+                {!noimage && (image ? image : defaultImage)}
                 {message && <Paragraph style={[styles.paragraph, { color }]}>{message}</Paragraph>}
                 {boldMessage && (
                   <Paragraph style={[styles.paragraph, { fontWeight: 'bold', color }]}>{boldMessage}</Paragraph>

@@ -47,7 +47,7 @@ class PhotoCapture extends React.Component {
     }
   }
 
-  captureUserMedia = async () => {
+  captureUserMedia = () => {
     log.debug('helper done')
     try {
       const context = this.canvasRef.current.getContext('2d')
@@ -74,13 +74,6 @@ class PhotoCapture extends React.Component {
           track.enabled = false
         })
       }, 'image/png')
-
-      // clear
-      // context.fillStyle = '#AAA'
-      // context.fillRect(0, 0, this.canvas.width, this.canvas.height)
-
-      // var data = canvas.toDataURL('image/png')
-      // photo.setAttribute('src', data)
     } catch (e) {
       log.debug('Failed on capture, error:', e.message, e)
       this.props.onError(e)

@@ -83,7 +83,7 @@ class TakeVideoClass extends React.Component<TakeVideoProps, State> {
     this.timeout && clearTimeout(this.timeout)
   }
 
-  componentWillMount = async () => {
+  componentWillMount = () => {
     navigator.getMedia =
       navigator.getUserMedia || // use the proper vendor prefix
       navigator.webkitGetUserMedia ||
@@ -173,6 +173,7 @@ const TakeVideo = ({ screenProps }) => {
       host: 'gun',
     }
     identity.uploads.video = video
+    screenProps.pop()
     screenProps.pop({ identity })
   }
   return <TakeVideoClass {...{ ...screenState, onDone }} />

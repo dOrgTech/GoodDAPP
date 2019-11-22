@@ -6,8 +6,7 @@ import { Section, UserAvatar, Wrapper } from '../common'
 import { withStyles } from '../../lib/styles'
 import AddIdentity from '../identity/AddIdentity'
 import AddIdentityMenu from '../identity/AddIdentityMenu'
-import AddHumanVerification from '../identity/AddHumanVerification'
-import AddPhotoId from '../identity/AddPhotoId'
+import AddMedia from '../identity/media/AddMedia'
 import GenericSocial from '../identity/GenericSocial'
 import IdentityDataTable from '../identity/IdentityDataTable'
 import TakePhoto from '../identity/media/TakePhoto.web'
@@ -50,7 +49,13 @@ const ProfileWrapper = props => {
         <CircleButtonWrapper
           iconName={'invite'}
           iconSize={25}
-          onPress={() => screenProps.push('AddIdentityMenu')}
+          onPress={() => screenProps.push('AddIdentityMenu', { identity: { mode: 'add-propose' } })}
+          style={[styles.iconRight]}
+        />
+        <CircleButtonWrapper
+          iconName={'edit'}
+          iconSize={25}
+          onPress={() => screenProps.push('AddIdentityMenu', { identity: { mode: 'add-update' } })}
           style={[styles.iconRight]}
         />
       </Section>
@@ -84,8 +89,7 @@ export default createStackNavigator({
   VerifyEditCode,
   AddIdentity,
   AddIdentityMenu,
-  AddHumanVerification,
-  AddPhotoId,
+  AddMedia,
   GenericSocial,
   IdentityDataTable,
   TakePhoto,

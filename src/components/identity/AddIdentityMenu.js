@@ -1,5 +1,5 @@
 // @flow
-import React from 'react'
+import React from 'react' //  useState
 import { FlatList, TouchableOpacity } from 'react-native'
 import _ from 'lodash'
 import {
@@ -9,14 +9,14 @@ import {
 } from '@dorgtech/id-dao-client'
 import GDStore from '../../lib/undux/GDStore'
 import { withStyles } from '../../lib/styles'
-import { BrandIcon, SaveButton, Section, Text, Wrapper } from '../common'
+import { BrandIcon, CustomButton, SaveButton, Section, Text, Wrapper } from '../common'
 import InputRounded from '../common/form/InputRounded'
 
 // import GDStore from '../../lib/undux/GDStore'
 import API from '../../lib/API/api'
 import { useScreenState } from '../appNavigation/stackNavigation'
 
-// import { useErrorDialog } from '../../lib/undux/utils/dialog'
+import { useDialog } from '../../lib/undux/utils/dialog'
 import { useWrappedGoodWallet } from '../../lib/wallet/useWrappedWallet.js'
 import logger from '../../lib/logger/pino-logger'
 import RoundedClose from '../common/buttons/menu/RoundedClose'
@@ -46,18 +46,53 @@ const IdentityView = ({ id, onPress, style, theme }) => (
   </TouchableOpacity>
 )
 
+const UpdateDialogue = ({ onPropose, onUpdate, styles, theme, ...props }) => (
+  <Section
+    style={{
+      flexGrow: 1,
+    }}
+  >
+    <Section.Row justifyContent="space-between" alignItems="flex-start">
+      <Text>
+        Would you like to update your identity definition registered on the DAO, or would you only like to update your
+        stored profile information?
+      </Text>
+      <CustomButton {...props} compact={true} iconSize={16} onPress={onPropose}>
+        <Text> Update on DAO </Text>
+      </CustomButton>
+      <CustomButton {...props} compact={true} iconSize={16} onPress={onUpdate}>
+        <Text> Only update profile information </Text>
+      </CustomButton>
+    </Section.Row>
+  </Section>
+)
+
+/*
+github, twitter: if already there, expose back button
+*keep track of differences*
+-to-delete
+-to-add
+with micro gundb it's just
+
+await Promise.all([toDelete, toAdd])
+*/
 const AddIdentityMenu = ({ screenProps, theme, styles }) => {
   const [screenState] = useScreenState(screenProps)
   const wallet = useWrappedGoodWallet()
   const store = GDStore.useStore()
   const profile = store.get('profile')
+  const [showDialog] = useDialog()
 
-  const { identity: identityState } = screenState
-  log.debug('id state', identityState)
-  const identity: { form: IdentityDefinitionForm } = identityState
-    ? identityState
-    : { form: new IdentityDefinitionForm(), uploads: {} }
+  // const [displayModal, setDisplayModal] = useState(false)
 
+  const { identity } = screenState
+  log.debug(_.isEqual(Object.keys(identity), ['mode']))
+
+  if (_.isEqual(Object.keys(identity), ['mode'])) {
+    log.debug('equal')
+    identity.form = new IdentityDefinitionForm()
+    identity.uploads = {}
+  }
   log.debug('has address', _.get(identity, 'form.$.address.value'))
   if (_.get(identity, 'form.$.address.value') == '') {
     identity.form.$.address.value = wallet.account
@@ -117,15 +152,21 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
 
   const keyExtractor = (item, index) => item
 
-  const handleVerifyPhoto = () => {
-    screenProps.push('TakeVideo', { from: 'AddIdentityMenu', identity })
+  const handleVerifyMedia = media => {
+    const title = 'ADD ' + media.toUpperCase()
+    log.debug('title', title)
+    screenProps.push('AddMedia', {
+      from: 'AddIdentityMenu',
+      identity,
+      media,
+      title: 'ADD ' + media.toUpperCase(),
+      whydontiseethis: title,
+    })
   }
 
-  // const handleVerifyPhotoId = () => {
-  //   screenProps.push('AddPhotoId', { from: 'AddIdentityMenu', identity })
-  // }
-
   const handleSave = async () => {
+    log.debug('hey save!', identity.mode)
+
     // //const res = identity.validate()
     // identity.form.$.name.value = profile.fullName
     // identity.form.$.address.value = profile.walletAddress
@@ -140,9 +181,20 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
     //   )
     // } else {
     // const data = identity.form.data
-    await API.proposeAdd({ form: identity.form.data, uploads: identity.uplaods })
+    let f = false
+    if (f) {
+      await API.proposeAdd({ form: identity.form.data, uploads: identity.uplaods })
+    }
 
-    // }
+    if (identity.mode === 'add-propose') {
+      log.debug('heeey propose')
+      const children = [<Text key={0}>add-propose</Text>]
+      showDialog({ children, noimage: true })
+    } else if (identity.mode == 'add-update') {
+      log.debug('heeeey update')
+      const children = [<UpdateDialogue key={0} theme={theme} />]
+      showDialog({ children, noimage: true })
+    }
   }
   return (
     <Wrapper>
@@ -160,7 +212,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
             renderItem={renderItem}
             style={styles.spacer}
           />
-          <TouchableOpacity style={styles.borderedBottomStyle} onPress={handleVerifyPhoto}>
+          <TouchableOpacity style={styles.borderedBottomStyle} onPress={() => handleVerifyMedia('video')}>
             <InputRounded
               disabled={true}
               icon={'camera'}
@@ -169,7 +221,7 @@ const AddIdentityMenu = ({ screenProps, theme, styles }) => {
               value={'Verify with video'}
             />
           </TouchableOpacity>
-          <RoundedClose icon={'camera'} text={'Verify your selfie'} />
+          <RoundedClose icon={'camera'} text={'Verify your selfie'} onPress={() => handleVerifyMedia('selfie')} />
           <Section.Row style={styles.borderedBottomStyle}>
             <SaveButton onPress={handleSave} text="Submit Your Identity" />
           </Section.Row>
