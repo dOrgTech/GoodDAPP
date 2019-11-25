@@ -145,6 +145,10 @@ module.exports = {
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
       'react-native': 'react-native-web',
       'WebView': 'react-native-web-webview',
+      'react-hot-loader': path.resolve(path.join(__dirname, '../node_modules/react-hot-loader')),
+      // add these 2 lines below so linked package will reference the patched version of `react` and `react-dom`
+      'react': path.resolve(path.join(__dirname, '../node_modules/react')),
+      'react-dom': path.resolve(path.join(__dirname, '../node_modules/react-dom')),
     },
     plugins: [
       // Adds support for installing with Plug'n'Play, leading to faster installs and adding
